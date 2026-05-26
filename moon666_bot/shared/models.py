@@ -32,7 +32,7 @@ class User(Base):
     username: Mapped[Optional[str]] = mapped_column(String(64))
     full_name: Mapped[str] = mapped_column(String(256))
     referred_by: Mapped[Optional[int]] = mapped_column(BigInteger, ForeignKey("users.id"))
-    balance_usdt: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=Decimal("0.00"))
+    balance_usdt: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=Decimal("0.00"), server_default="0")
     joined_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
     channel_joined_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
 
