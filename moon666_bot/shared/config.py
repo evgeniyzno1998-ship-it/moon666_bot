@@ -1,8 +1,10 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from decimal import Decimal
 
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+
     # Telegram
     bot_token: str
     channel_id: int
@@ -22,9 +24,6 @@ class Settings(BaseSettings):
     bonus_reaction: Decimal = Decimal("0.01")
     bonus_retention: Decimal = Decimal("0.05")
     min_withdrawal: Decimal = Decimal("10.00")
-
-    class Config:
-        env_file = ".env"
 
 
 settings = Settings()
