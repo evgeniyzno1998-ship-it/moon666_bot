@@ -23,7 +23,7 @@
         {% for w, u in withdrawals %}
         <tr>
             <td>
-                <div style="font-weight:600">@{{ u.username or u.full_name }}</div>
+                <div style="font-weight:600">@{{ u.username or u.full_name or '—' }}</div>
                 <div style="font-size:11px;color:var(--text-3);margin-top:2px">
                     ID: {{ u.id }}
                 </div>

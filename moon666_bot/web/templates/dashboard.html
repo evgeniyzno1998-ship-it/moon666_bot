@@ -79,7 +79,7 @@
             {% for w, u in recent_withdrawals %}
             <tr>
                 <td>
-                    <div style="font-weight:500">@{{ u.username or u.full_name }}</div>
+                    <div style="font-weight:500">@{{ u.username or u.full_name or '—' }}</div>
                     <div style="font-size:11px;color:var(--text-3);margin-top:2px;
                                 font-family:monospace">{{ w.wallet_address[:18] }}…</div>
                 </td>
