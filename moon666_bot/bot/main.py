@@ -12,6 +12,7 @@ from bot.handlers.cabinet import router as cabinet_router
 from bot.handlers.withdrawal import router as withdrawal_router
 from bot.handlers.reactions import router as reactions_router
 from bot.services.scheduler import start_scheduler
+from bot.middlewares.db import DbSessionMiddleware
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -36,6 +37,8 @@ async def on_startup(bot: Bot):
 async def main():
     bot = Bot(token=settings.bot_token)
     dp = Dispatcher(storage=MemoryStorage())
+
+    dp.update.middleware(DbSessionMiddleware())
 
     dp.include_router(start_router)
     dp.include_router(cabinet_router)
