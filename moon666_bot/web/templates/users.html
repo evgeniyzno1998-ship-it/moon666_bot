@@ -39,7 +39,7 @@
         <tr>
             <td>
                 <div style="font-weight:600">@{{ u.username or '—' }}</div>
-                {% if u.full_name and u.full_name != u.username %}
+                {% if u.full_name and u.full_name.lower() not in ['null', 'none', ''] and u.full_name != u.username %}
                 <div style="font-size:11px;color:var(--text-3);margin-top:2px">
                     {{ u.full_name }}
                 </div>

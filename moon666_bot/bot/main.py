@@ -5,7 +5,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import BotCommand
 
 from shared.config import settings
-from shared.database import engine
+from shared.database import engine, async_session_maker
 from shared.models import Base
 from bot.handlers.start import router as start_router
 from bot.handlers.cabinet import router as cabinet_router
@@ -26,6 +26,15 @@ async def on_startup(bot: Bot):
     # Create tables if missing (in prod use alembic)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    # Fix bad full_name values stored as literal "null" strings
+    from sqlalchemy import update
+    from shared.models import User
+    async with async_session_maker() as session:
+        await session.execute(
+            update(User).where(User.full_name == "null").values(full_name=None)
+        )
+        await session.commit()
 
     await bot.set_my_commands([
         BotCommand(command="start", description="Main menu"),
