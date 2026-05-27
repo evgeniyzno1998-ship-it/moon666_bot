@@ -33,8 +33,8 @@ class User(Base):
     full_name: Mapped[str] = mapped_column(String(256))
     referred_by: Mapped[Optional[int]] = mapped_column(BigInteger, ForeignKey("users.id"))
     balance_usdt: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=Decimal("0.00"), server_default="0")
-    joined_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
-    channel_joined_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
+    joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
+    channel_joined_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
 
     referrals_made: Mapped[List["Referral"]] = relationship(
         "Referral", foreign_keys="Referral.referrer_id", back_populates="referrer"
@@ -52,7 +52,7 @@ class Referral(Base):
     join_bonus_paid: Mapped[bool] = mapped_column(Boolean, default=False)
     reaction_bonus_paid: Mapped[bool] = mapped_column(Boolean, default=False)
     retention_bonus_paid: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
 
     referrer: Mapped["User"] = relationship("User", foreign_keys=[referrer_id], back_populates="referrals_made")
     referred: Mapped["User"] = relationship("User", foreign_keys=[referred_id])
@@ -66,7 +66,7 @@ class Transaction(Base):
     amount_usdt: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     type: Mapped[TransactionType] = mapped_column(SAEnum(TransactionType))
     related_user_id: Mapped[Optional[int]] = mapped_column(BigInteger)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
 
     user: Mapped["User"] = relationship("User", back_populates="transactions")
 
@@ -81,8 +81,8 @@ class Withdrawal(Base):
     status: Mapped[WithdrawalStatus] = mapped_column(
         SAEnum(WithdrawalStatus), default=WithdrawalStatus.pending
     )
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
-    processed_at: Mapped[Optional[datetime]] = mapped_column(DateTime)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
+    processed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
 
     user: Mapped["User"] = relationship("User", back_populates="withdrawals")
 
@@ -94,4 +94,4 @@ class ChannelReaction(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"))
     post_id: Mapped[int] = mapped_column(BigInteger)
-    reacted_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+    reacted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())

@@ -64,11 +64,10 @@ async def cmd_start(message: Message, command: CommandObject, session: AsyncSess
     except Exception:
         pass
 
-    bot_me = await bot.get_me()
     await message.answer(
         "🌙 Добро пожаловать в Moon666!\n\n"
         "Чтобы участвовать в реферальной программе, подпишись на канал:",
-        reply_markup=check_subscription_kb(bot_me.username),
+        reply_markup=check_subscription_kb(),
     )
 
 

@@ -11,8 +11,8 @@ def main_menu_kb() -> InlineKeyboardMarkup:
     ])
 
 
-def check_subscription_kb(bot_username: str) -> InlineKeyboardMarkup:
+def check_subscription_kb(channel_username: str = "Moon666") -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="📢 Подписаться на канал", url="https://t.me/Moon666")],
+        [InlineKeyboardButton(text="📢 Подписаться на канал", url=f"https://t.me/{channel_username}")],
         [InlineKeyboardButton(text="✅ Я подписался", callback_data="check_subscription")],
     ])

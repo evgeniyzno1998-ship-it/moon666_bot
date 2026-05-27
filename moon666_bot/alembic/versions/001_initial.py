@@ -23,8 +23,8 @@ def upgrade() -> None:
         sa.Column('full_name', sa.String(length=256), nullable=False),
         sa.Column('referred_by', sa.BigInteger(), nullable=True),
         sa.Column('balance_usdt', sa.Numeric(precision=10, scale=2), server_default='0', nullable=False),
-        sa.Column('joined_at', sa.DateTime(), server_default=sa.func.now(), nullable=False),
-        sa.Column('channel_joined_at', sa.DateTime(), nullable=True),
+        sa.Column('joined_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column('channel_joined_at', sa.DateTime(timezone=True), nullable=True),
         sa.ForeignKeyConstraint(['referred_by'], ['users.id'], ),
         sa.PrimaryKeyConstraint('id')
     )
@@ -36,7 +36,7 @@ def upgrade() -> None:
         sa.Column('join_bonus_paid', sa.Boolean(), server_default=sa.false(), nullable=False),
         sa.Column('reaction_bonus_paid', sa.Boolean(), server_default=sa.false(), nullable=False),
         sa.Column('retention_bonus_paid', sa.Boolean(), server_default=sa.false(), nullable=False),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.func.now(), nullable=False),
+        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.ForeignKeyConstraint(['referrer_id'], ['users.id'], ),
         sa.ForeignKeyConstraint(['referred_id'], ['users.id'], ),
         sa.PrimaryKeyConstraint('id'),
@@ -50,7 +50,7 @@ def upgrade() -> None:
         sa.Column('amount_usdt', sa.Numeric(precision=10, scale=2), nullable=False),
         sa.Column('type', sa.Enum('referral_join', 'referral_reaction', 'referral_retention', name='transactiontype'), nullable=False),
         sa.Column('related_user_id', sa.BigInteger(), nullable=True),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.func.now(), nullable=False),
+        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
         sa.PrimaryKeyConstraint('id')
     )
@@ -63,8 +63,8 @@ def upgrade() -> None:
         sa.Column('amount_usdt', sa.Numeric(precision=10, scale=2), nullable=False),
         sa.Column('wallet_address', sa.String(length=256), nullable=False),
         sa.Column('status', sa.Enum('pending', 'approved', 'rejected', name='withdrawalstatus'), nullable=False),
-        sa.Column('created_at', sa.DateTime(), server_default=sa.func.now(), nullable=False),
-        sa.Column('processed_at', sa.DateTime(), nullable=True),
+        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column('processed_at', sa.DateTime(timezone=True), nullable=True),
         sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
         sa.PrimaryKeyConstraint('id')
     )
@@ -74,7 +74,7 @@ def upgrade() -> None:
         sa.Column('id', sa.Integer(), nullable=False),
         sa.Column('user_id', sa.BigInteger(), nullable=False),
         sa.Column('post_id', sa.BigInteger(), nullable=False),
-        sa.Column('reacted_at', sa.DateTime(), server_default=sa.func.now(), nullable=False),
+        sa.Column('reacted_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('user_id', name='uq_channel_reactions_user')
