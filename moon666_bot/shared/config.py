@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     # Channel invite link (used in bot subscription button)
     channel_invite_link: str = "https://t.me/+your_invite_link"
 
+    # Anti-fraud
+    max_daily_referrals: int = 10  # max new referrals per referrer per day
+
     # Bonus amounts
     bonus_join: Decimal = Decimal("0.20")
     bonus_reaction: Decimal = Decimal("0.01")

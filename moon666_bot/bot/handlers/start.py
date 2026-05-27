@@ -2,15 +2,16 @@ from aiogram import Router, Bot
 from aiogram.filters import CommandStart
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import CommandObject
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from shared.models import User, Referral
 from shared.database import get_session
 from shared.config import settings
 from bot.keyboards import main_menu_kb, check_subscription_kb
 from bot.services.referral import award_join_bonus
+from bot.services.onboarding import schedule_onboarding
 
 router = Router()
 
@@ -41,6 +42,19 @@ async def _record_referral(session: AsyncSession, user: User, referrer_id_str: s
     referrer = await session.get(User, referrer_id)
     if not referrer:
         return
+
+    # Anti-fraud: daily referral limit per referrer
+    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    daily_count_res = await session.execute(
+        select(func.count()).select_from(Referral).where(
+            Referral.referrer_id == referrer_id,
+            Referral.created_at >= today_start,
+        )
+    )
+    daily_count = daily_count_res.scalar() or 0
+    if daily_count >= settings.max_daily_referrals:
+        return
+
     user.referred_by = referrer_id
     ref = Referral(referrer_id=referrer_id, referred_id=user.id)
     session.add(ref)
@@ -124,4 +138,12 @@ async def _on_subscription_confirmed(message: Message, session: AsyncSession, us
         f"Choose an action:",
         reply_markup=main_menu_kb(),
         parse_mode="HTML",
+    )
+
+    # Fire onboarding sequence (non-blocking)
+    schedule_onboarding(
+        bot, user.id,
+        settings.bonus_join,
+        settings.bonus_reaction,
+        settings.bonus_retention,
     )
