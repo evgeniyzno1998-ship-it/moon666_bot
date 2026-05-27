@@ -1,24 +1,166 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="page-title">⚙️ Настройки</div>
+
+<div class="pg-head">
+    <div class="pg-ico">⚙️</div>
+    <div class="pg-title">Настройки</div>
+</div>
+
 {% if saved %}
-<div style="background:#052e16;color:#4ade80;padding:10px 16px;border-radius:8px;margin-bottom:16px">
-    ✅ Настройки сохранены (активны до перезапуска)
-</div>
+<div class="alert alert-ok">✅ Настройки сохранены (активны до перезапуска сервера)</div>
 {% endif %}
-{% if error %}<div style="background:#450a0a;color:#f87171;padding:10px 16px;border-radius:8px;margin-bottom:16px">⚠️ {{ error }}</div>{% endif %}
-<div class="card" style="max-width:420px">
-    <form method="post">
-        <h3 style="font-size:14px;color:#94a3b8;margin-bottom:16px">Бонусы (USDT)</h3>
-        <label style="font-size:13px;color:#64748b;display:block;margin-bottom:4px">За реферала (вступление)</label>
-        <input type="number" name="bonus_join" value="{{ settings.bonus_join }}" step="0.01" min="0" style="width:100%;margin-bottom:12px">
-        <label style="font-size:13px;color:#64748b;display:block;margin-bottom:4px">За первую реакцию</label>
-        <input type="number" name="bonus_reaction" value="{{ settings.bonus_reaction }}" step="0.01" min="0" style="width:100%;margin-bottom:12px">
-        <label style="font-size:13px;color:#64748b;display:block;margin-bottom:4px">За удержание 30 дней</label>
-        <input type="number" name="bonus_retention" value="{{ settings.bonus_retention }}" step="0.01" min="0" style="width:100%;margin-bottom:12px">
-        <label style="font-size:13px;color:#64748b;display:block;margin-bottom:4px">Минимальная сумма вывода (USDT)</label>
-        <input type="number" name="min_withdrawal" value="{{ settings.min_withdrawal }}" step="0.01" min="0" style="width:100%;margin-bottom:20px">
-        <button type="submit" class="btn btn-green" style="width:100%;padding:10px;font-size:14px">💾 Сохранить</button>
-    </form>
+{% if error %}
+<div class="alert alert-err">⚠️ {{ error }}</div>
+{% endif %}
+
+<div style="display:grid;grid-template-columns:420px 1fr;gap:16px;align-items:start">
+
+    <!-- Form -->
+    <div class="card">
+        <div class="card-hd">
+            <span>💰</span>
+            <span class="card-ttl">Бонусы (USDT)</span>
+        </div>
+        <form method="post">
+            <div style="display:flex;flex-direction:column;gap:14px">
+
+                <div>
+                    <label style="display:block;font-size:11px;font-weight:600;
+                                  text-transform:uppercase;letter-spacing:.7px;
+                                  color:var(--text-3);margin-bottom:7px">
+                        За реферала (вступление)
+                    </label>
+                    <div style="position:relative">
+                        <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);
+                                     color:var(--green);font-size:13px;font-weight:700">$</span>
+                        <input type="number" name="bonus_join"
+                               value="{{ settings.bonus_join }}"
+                               step="0.01" min="0"
+                               style="width:100%;padding-left:28px">
+                    </div>
+                </div>
+
+                <div>
+                    <label style="display:block;font-size:11px;font-weight:600;
+                                  text-transform:uppercase;letter-spacing:.7px;
+                                  color:var(--text-3);margin-bottom:7px">
+                        За первую реакцию
+                    </label>
+                    <div style="position:relative">
+                        <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);
+                                     color:var(--blue);font-size:13px;font-weight:700">$</span>
+                        <input type="number" name="bonus_reaction"
+                               value="{{ settings.bonus_reaction }}"
+                               step="0.01" min="0"
+                               style="width:100%;padding-left:28px">
+                    </div>
+                </div>
+
+                <div>
+                    <label style="display:block;font-size:11px;font-weight:600;
+                                  text-transform:uppercase;letter-spacing:.7px;
+                                  color:var(--text-3);margin-bottom:7px">
+                        За удержание 30 дней
+                    </label>
+                    <div style="position:relative">
+                        <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);
+                                     color:var(--purple);font-size:13px;font-weight:700">$</span>
+                        <input type="number" name="bonus_retention"
+                               value="{{ settings.bonus_retention }}"
+                               step="0.01" min="0"
+                               style="width:100%;padding-left:28px">
+                    </div>
+                </div>
+
+                <div style="border-top:1px solid var(--border);padding-top:14px">
+                    <label style="display:block;font-size:11px;font-weight:600;
+                                  text-transform:uppercase;letter-spacing:.7px;
+                                  color:var(--text-3);margin-bottom:7px">
+                        Минимальная сумма вывода
+                    </label>
+                    <div style="position:relative">
+                        <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);
+                                     color:var(--gold);font-size:13px;font-weight:700">$</span>
+                        <input type="number" name="min_withdrawal"
+                               value="{{ settings.min_withdrawal }}"
+                               step="0.01" min="0"
+                               style="width:100%;padding-left:28px">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width:100%;padding:11px;font-size:14px;justify-content:center;margin-top:4px">
+                    💾 Сохранить изменения
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Info panel -->
+    <div class="card">
+        <div class="card-hd">
+            <span>📋</span>
+            <span class="card-ttl">Текущие значения</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+
+            <div style="display:flex;justify-content:space-between;align-items:center;
+                        padding:12px 14px;background:rgba(14,203,129,.05);
+                        border:1px solid rgba(14,203,129,.15);border-radius:var(--r-sm)">
+                <div>
+                    <div style="font-size:13px;font-weight:500">За вступление реферала</div>
+                    <div style="font-size:11px;color:var(--text-3);margin-top:2px">bonus_join</div>
+                </div>
+                <span style="color:var(--green);font-size:18px;font-weight:700">
+                    ${{ settings.bonus_join }}
+                </span>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;
+                        padding:12px 14px;background:rgba(33,150,243,.05);
+                        border:1px solid rgba(33,150,243,.15);border-radius:var(--r-sm)">
+                <div>
+                    <div style="font-size:13px;font-weight:500">За реакцию на пост</div>
+                    <div style="font-size:11px;color:var(--text-3);margin-top:2px">bonus_reaction</div>
+                </div>
+                <span style="color:var(--blue);font-size:18px;font-weight:700">
+                    ${{ settings.bonus_reaction }}
+                </span>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;
+                        padding:12px 14px;background:var(--purple-dim);
+                        border:1px solid rgba(167,139,250,.15);border-radius:var(--r-sm)">
+                <div>
+                    <div style="font-size:13px;font-weight:500">За удержание 30 дней</div>
+                    <div style="font-size:11px;color:var(--text-3);margin-top:2px">bonus_retention</div>
+                </div>
+                <span style="color:var(--purple);font-size:18px;font-weight:700">
+                    ${{ settings.bonus_retention }}
+                </span>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;
+                        padding:12px 14px;background:var(--gold-dim);
+                        border:1px solid rgba(240,185,11,.2);border-radius:var(--r-sm)">
+                <div>
+                    <div style="font-size:13px;font-weight:500">Мин. сумма вывода</div>
+                    <div style="font-size:11px;color:var(--text-3);margin-top:2px">min_withdrawal</div>
+                </div>
+                <span style="color:var(--gold);font-size:18px;font-weight:700">
+                    ${{ settings.min_withdrawal }}
+                </span>
+            </div>
+
+            <div style="margin-top:4px;padding:10px 14px;background:rgba(255,255,255,.02);
+                        border-radius:var(--r-sm);border:1px solid var(--border)">
+                <div style="font-size:11px;color:var(--text-3)">
+                    ⚠️ Изменения применяются до перезапуска сервиса. Для постоянного хранения
+                    обновите переменные окружения в Railway.
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
+
 {% endblock %}

@@ -2,33 +2,151 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Moon666 Admin — Вход</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #0f172a; color: #e2e8f0; display: flex; justify-content: center;
-               align-items: center; min-height: 100vh; font-family: sans-serif; }
-        .login-box { background: #1e293b; border-radius: 12px; padding: 40px; width: 320px; }
-        h1 { margin-bottom: 24px; text-align: center; color: #a78bfa; }
-        label { display: block; margin-bottom: 4px; font-size: 13px; color: #94a3b8; }
-        input { width: 100%; background: #0f172a; border: 1px solid #334155; color: #e2e8f0;
-                padding: 10px 12px; border-radius: 6px; font-size: 14px; margin-bottom: 16px; }
-        button { width: 100%; padding: 10px; background: #7c3aed; color: white; border: none;
-                 border-radius: 6px; font-size: 15px; cursor: pointer; }
-        button:hover { background: #6d28d9; }
-        .error { color: #f87171; font-size: 13px; margin-bottom: 12px; text-align: center; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0b0c10;
+            color: #eaecef;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Ambient glow background */
+        body::before {
+            content: '';
+            position: fixed;
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(240,185,11,.06) 0%, transparent 70%);
+            top: 50%; left: 50%;
+            transform: translate(-50%, -60%);
+            pointer-events: none;
+        }
+
+        /* Grid pattern */
+        body::after {
+            content: '';
+            position: fixed; inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,.015) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+        }
+
+        .login-wrap {
+            width: 360px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Logo */
+        .logo {
+            display: flex; flex-direction: column; align-items: center;
+            margin-bottom: 32px; gap: 12px;
+        }
+        .logo-icon {
+            width: 64px; height: 64px;
+            background: linear-gradient(135deg, #f0b90b, #ffe066);
+            border-radius: 18px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 30px;
+            box-shadow: 0 0 40px rgba(240,185,11,.35), 0 4px 20px rgba(0,0,0,.5);
+        }
+        .logo-title { font-size: 24px; font-weight: 700; letter-spacing: -.5px; }
+        .logo-sub { font-size: 12px; color: #474d57; font-weight: 500; letter-spacing: .5px; text-transform: uppercase; }
+
+        /* Card */
+        .card {
+            background: #111219;
+            border: 1px solid #1c1e2e;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 24px 60px rgba(0,0,0,.5);
+        }
+
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 24px; color: #848e9c; text-align: center; }
+
+        .field { margin-bottom: 16px; }
+        label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase;
+                letter-spacing: .7px; color: #474d57; margin-bottom: 7px; }
+        input {
+            width: 100%;
+            background: #0b0c10;
+            border: 1px solid #1c1e2e;
+            color: #eaecef;
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: 14px; font-family: inherit;
+            outline: none; transition: border-color .15s, box-shadow .15s;
+        }
+        input:focus {
+            border-color: #f0b90b;
+            box-shadow: 0 0 0 3px rgba(240,185,11,.12);
+        }
+        input::placeholder { color: #2d2f45; }
+
+        .btn-submit {
+            width: 100%; margin-top: 8px;
+            padding: 13px;
+            background: #f0b90b;
+            color: #0a0b10;
+            border: none; border-radius: 10px;
+            font-size: 14px; font-weight: 700;
+            font-family: inherit; cursor: pointer;
+            transition: all .15s;
+            letter-spacing: .2px;
+        }
+        .btn-submit:hover {
+            filter: brightness(1.08);
+            box-shadow: 0 0 24px rgba(240,185,11,.35);
+        }
+        .btn-submit:active { transform: scale(.99); }
+
+        .error-msg {
+            display: flex; align-items: center; gap: 8px;
+            background: rgba(246,70,93,.1);
+            border: 1px solid rgba(246,70,93,.25);
+            color: #f6465d;
+            padding: 10px 14px; border-radius: 8px;
+            font-size: 13px; margin-bottom: 16px;
+        }
     </style>
 </head>
 <body>
-    <div class="login-box">
-        <h1>🌙 Moon666</h1>
-        {% if error %}<p class="error">{{ error }}</p>{% endif %}
+<div class="login-wrap">
+    <div class="logo">
+        <div class="logo-icon">🌙</div>
+        <div>
+            <div class="logo-title">Moon666</div>
+            <div class="logo-sub">Admin Dashboard</div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-title">Введите данные для входа</div>
+        {% if error %}
+        <div class="error-msg">⚠️ {{ error }}</div>
+        {% endif %}
         <form method="post">
-            <label>Логин</label>
-            <input type="text" name="username" required>
-            <label>Пароль</label>
-            <input type="password" name="password" required>
-            <button type="submit">Войти</button>
+            <div class="field">
+                <label>Логин</label>
+                <input type="text" name="username" placeholder="admin" required autocomplete="username">
+            </div>
+            <div class="field">
+                <label>Пароль</label>
+                <input type="password" name="password" placeholder="••••••••" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn-submit">Войти →</button>
         </form>
     </div>
+</div>
 </body>
 </html>

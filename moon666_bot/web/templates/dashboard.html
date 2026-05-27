@@ -1,74 +1,147 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="page-title">📊 Дашборд</div>
 
-<div class="period-filter">
-    <a href="/?period=today" class="period-btn {% if period == 'today' %}active{% endif %}">Сегодня</a>
-    <a href="/?period=7d" class="period-btn {% if period == '7d' %}active{% endif %}">7 дней</a>
-    <a href="/?period=30d" class="period-btn {% if period == '30d' %}active{% endif %}">30 дней</a>
-    <a href="/?period=90d" class="period-btn {% if period == '90d' %}active{% endif %}">90 дней</a>
-    <form method="get" style="display:flex;gap:6px;align-items:center;">
+<div class="pg-head">
+    <div class="pg-ico">📊</div>
+    <div class="pg-title">Дашборд</div>
+</div>
+
+<div class="period-bar">
+    <a href="/?period=today" class="prd-btn {% if period == 'today' %}active{% endif %}">Сегодня</a>
+    <a href="/?period=7d"    class="prd-btn {% if period == '7d'    %}active{% endif %}">7 дней</a>
+    <a href="/?period=30d"   class="prd-btn {% if period == '30d'   %}active{% endif %}">30 дней</a>
+    <a href="/?period=90d"   class="prd-btn {% if period == '90d'   %}active{% endif %}">90 дней</a>
+    <div class="prd-sep"></div>
+    <form method="get" style="display:flex;gap:7px;align-items:center;">
         <input type="hidden" name="period" value="custom">
-        <input type="date" name="date_from" value="{{ date_from or '' }}">
-        <input type="date" name="date_to" value="{{ date_to or '' }}">
-        <button type="submit" class="btn btn-green">Применить</button>
+        <input type="date" name="date_from" value="{{ date_from or '' }}" style="font-size:12px;padding:6px 10px">
+        <input type="date" name="date_to"   value="{{ date_to or '' }}"   style="font-size:12px;padding:6px 10px">
+        <button type="submit" class="btn btn-primary" style="padding:6px 14px">Применить</button>
     </form>
 </div>
 
+<!-- KPI CARDS -->
 <div class="kpi-grid">
     <div class="kpi">
-        <div class="kpi-value" style="color:#a78bfa">{{ total_users }}</div>
-        <div class="kpi-label">Подписчиков</div>
+        <div class="kpi-lbl">Подписчиков</div>
+        <div class="kpi-val" style="color:var(--purple)">{{ total_users }}</div>
+        <div class="kpi-sub">за период</div>
+        <div class="kpi-bg-ico">👥</div>
+        <div style="position:absolute;bottom:0;left:0;right:0;height:3px;
+                    background:linear-gradient(90deg,var(--purple),transparent);border-radius:0 0 var(--r) var(--r);opacity:.5"></div>
     </div>
     <div class="kpi">
-        <div class="kpi-value" style="color:#34d399">${{ "%.2f"|format(total_accrued) }}</div>
-        <div class="kpi-label">Начислено</div>
+        <div class="kpi-lbl">Начислено</div>
+        <div class="kpi-val" style="color:var(--green)">${{ "%.2f"|format(total_accrued) }}</div>
+        <div class="kpi-sub">USDT реферальных</div>
+        <div class="kpi-bg-ico">💰</div>
+        <div style="position:absolute;bottom:0;left:0;right:0;height:3px;
+                    background:linear-gradient(90deg,var(--green),transparent);border-radius:0 0 var(--r) var(--r);opacity:.5"></div>
     </div>
     <div class="kpi">
-        <div class="kpi-value" style="color:#60a5fa">${{ "%.2f"|format(total_paid) }}</div>
-        <div class="kpi-label">Выплачено</div>
+        <div class="kpi-lbl">Выплачено</div>
+        <div class="kpi-val" style="color:var(--blue)">${{ "%.2f"|format(total_paid) }}</div>
+        <div class="kpi-sub">USDT выведено</div>
+        <div class="kpi-bg-ico">✅</div>
+        <div style="position:absolute;bottom:0;left:0;right:0;height:3px;
+                    background:linear-gradient(90deg,var(--blue),transparent);border-radius:0 0 var(--r) var(--r);opacity:.5"></div>
     </div>
     <div class="kpi">
-        <div class="kpi-value" style="color:#fbbf24">{{ pending_count }}</div>
-        <div class="kpi-label">Заявок в очереди</div>
+        <div class="kpi-lbl">Заявок в очереди</div>
+        <div class="kpi-val" style="color:var(--gold)">{{ pending_count }}</div>
+        <div class="kpi-sub">ожидают обработки</div>
+        <div class="kpi-bg-ico">⏳</div>
+        <div style="position:absolute;bottom:0;left:0;right:0;height:3px;
+                    background:linear-gradient(90deg,var(--gold),transparent);border-radius:0 0 var(--r) var(--r);opacity:.5"></div>
     </div>
 </div>
 
-<div class="card">
-    <h3 style="margin-bottom:12px;font-size:14px;color:#94a3b8">⏳ Последние заявки на вывод</h3>
-    {% if recent_withdrawals %}
-    <table>
-        <tr><th>Пользователь</th><th>Сумма</th><th>Кошелёк</th><th>Дата</th><th></th></tr>
-        {% for w, u in recent_withdrawals %}
-        <tr>
-            <td>@{{ u.username or u.full_name }}</td>
-            <td style="color:#fbbf24">${{ "%.2f"|format(w.amount_usdt) }}</td>
-            <td><code style="font-size:12px">{{ w.wallet_address[:20] }}...</code></td>
-            <td style="color:#64748b">{{ w.created_at.strftime('%d.%m %H:%M') }}</td>
-            <td>
-                <a href="/withdrawals" class="btn btn-green" style="text-decoration:none">Обработать →</a>
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
-    {% else %}
-    <p style="color:#64748b">Нет активных заявок</p>
-    {% endif %}
-</div>
+<!-- BOTTOM ROW -->
+<div style="display:grid;grid-template-columns:1fr 1.3fr;gap:14px">
 
-<div class="card">
-    <h3 style="margin-bottom:12px;font-size:14px;color:#94a3b8">📈 Рост подписчиков (по неделям)</h3>
-    {% set max_count = growth | map(attribute='count') | max %}
-    {% for g in growth %}
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-        <span style="color:#64748b;font-size:12px;width:32px">{{ g.week }}</span>
-        <div style="background:#0f172a;border-radius:4px;height:16px;flex:1">
-            {% if max_count > 0 %}
-            <div style="background:#7c3aed;width:{{ (g.count / max_count * 100)|int }}%;height:16px;border-radius:4px;min-width:{% if g.count > 0 %}4px{% else %}0{% endif %}"></div>
-            {% endif %}
+    <!-- Recent withdrawals -->
+    <div class="card">
+        <div class="card-hd">
+            <span>⏳</span>
+            <span class="card-ttl">Последние заявки на вывод</span>
         </div>
-        <span style="color:#a78bfa;font-size:12px;width:24px">{{ g.count }}</span>
+        {% if recent_withdrawals %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Пользователь</th>
+                    <th>Сумма</th>
+                    <th>Дата</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for w, u in recent_withdrawals %}
+            <tr>
+                <td>
+                    <div style="font-weight:500">@{{ u.username or u.full_name }}</div>
+                    <div style="font-size:11px;color:var(--text-3);margin-top:2px;
+                                font-family:monospace">{{ w.wallet_address[:18] }}…</div>
+                </td>
+                <td>
+                    <span style="color:var(--gold);font-weight:700;font-size:15px">
+                        ${{ "%.2f"|format(w.amount_usdt) }}
+                    </span>
+                </td>
+                <td style="color:var(--text-2);font-size:12px">
+                    {{ w.created_at.strftime('%d.%m %H:%M') }}
+                </td>
+                <td>
+                    <a href="/withdrawals" class="btn btn-ghost"
+                       style="font-size:11px;padding:5px 10px;text-decoration:none">→</a>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty">
+            <div class="empty-ico">📭</div>
+            <div class="empty-txt">Нет активных заявок</div>
+        </div>
+        {% endif %}
     </div>
-    {% endfor %}
+
+    <!-- Growth chart -->
+    <div class="card">
+        <div class="card-hd">
+            <span>📈</span>
+            <span class="card-ttl">Рост подписчиков по неделям</span>
+        </div>
+        {% set ns = namespace(max=1) %}
+        {% for g in growth %}
+            {% if g.count > ns.max %}{% set ns.max = g.count %}{% endif %}
+        {% endfor %}
+        <div style="display:flex;flex-direction:column;gap:9px">
+        {% for g in growth %}
+        <div style="display:flex;align-items:center;gap:10px">
+            <span style="color:var(--text-3);font-size:11px;width:30px;
+                         text-align:right;font-variant-numeric:tabular-nums">{{ g.week }}</span>
+            <div style="flex:1;background:rgba(255,255,255,.03);
+                        border-radius:5px;height:22px;overflow:hidden;position:relative">
+                <div style="
+                    height:100%;
+                    width:{{ (g.count / ns.max * 100)|int if ns.max > 0 else 0 }}%;
+                    min-width:{% if g.count > 0 %}4px{% else %}0{% endif %};
+                    background:linear-gradient(90deg,rgba(240,185,11,.15),rgba(240,185,11,.55));
+                    border-radius:5px;
+                    position:relative;
+                ">{% if g.count > 0 %}<div style="position:absolute;right:0;top:0;bottom:0;
+                    width:2px;background:var(--gold);border-radius:2px;
+                    box-shadow:0 0 8px var(--gold)"></div>{% endif %}
+                </div>
+            </div>
+            <span style="color:var(--gold);font-size:12px;font-weight:600;
+                         width:26px;font-variant-numeric:tabular-nums">{{ g.count }}</span>
+        </div>
+        {% endfor %}
+        </div>
+    </div>
+
 </div>
 {% endblock %}

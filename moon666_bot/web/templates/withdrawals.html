@@ -1,34 +1,81 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="page-title">📤 Выводы</div>
-<div class="card">
+
+<div class="pg-head">
+    <div class="pg-ico">📤</div>
+    <div class="pg-title">Выводы</div>
+</div>
+
+<div class="card" style="padding:0;overflow:hidden">
     {% if withdrawals %}
     <table>
-        <tr><th>Пользователь</th><th>Сумма</th><th>Кошелёк</th><th>Дата</th><th>Статус</th><th>Действие</th></tr>
+        <thead>
+            <tr>
+                <th>Пользователь</th>
+                <th>Сумма</th>
+                <th>Кошелёк</th>
+                <th>Дата</th>
+                <th>Статус</th>
+                <th style="text-align:right">Действие</th>
+            </tr>
+        </thead>
+        <tbody>
         {% for w, u in withdrawals %}
         <tr>
-            <td>@{{ u.username or u.full_name }}</td>
-            <td style="color:#fbbf24;font-weight:bold">${{ "%.2f"|format(w.amount_usdt) }}</td>
-            <td><code style="font-size:12px">{{ w.wallet_address }}</code></td>
-            <td style="color:#64748b">{{ w.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
-            <td><span class="badge badge-{{ w.status.value }}">{{ w.status.value }}</span></td>
             <td>
+                <div style="font-weight:600">@{{ u.username or u.full_name }}</div>
+                <div style="font-size:11px;color:var(--text-3);margin-top:2px">
+                    ID: {{ u.id }}
+                </div>
+            </td>
+            <td>
+                <span style="color:var(--gold);font-weight:700;font-size:16px">
+                    ${{ "%.2f"|format(w.amount_usdt) }}
+                </span>
+            </td>
+            <td>
+                <code style="font-size:11.5px;color:var(--text-2);
+                             background:rgba(255,255,255,.04);
+                             padding:3px 8px;border-radius:5px;
+                             border:1px solid var(--border)">{{ w.wallet_address }}</code>
+            </td>
+            <td style="color:var(--text-2);font-size:12px;white-space:nowrap">
+                {{ w.created_at.strftime('%d.%m.%Y') }}<br>
+                <span style="color:var(--text-3)">{{ w.created_at.strftime('%H:%M') }}</span>
+            </td>
+            <td>
+                <span class="badge badge-{{ w.status.value }}">
+                    {% if w.status.value == 'pending' %}Ожидает
+                    {% elif w.status.value == 'approved' %}Выплачено
+                    {% else %}Отклонено{% endif %}
+                </span>
+            </td>
+            <td style="text-align:right">
                 {% if w.status.value == 'pending' %}
-                <form method="post" action="/withdrawals/{{ w.id }}/approve" style="display:inline">
-                    <button type="submit" class="btn btn-green">✅ Выплатить</button>
-                </form>
-                <form method="post" action="/withdrawals/{{ w.id }}/reject" style="display:inline;margin-left:4px">
-                    <button type="submit" class="btn btn-red">❌</button>
-                </form>
+                <div style="display:flex;gap:6px;justify-content:flex-end">
+                    <form method="post" action="/withdrawals/{{ w.id }}/approve">
+                        <button type="submit" class="btn btn-green">✅ Выплатить</button>
+                    </form>
+                    <form method="post" action="/withdrawals/{{ w.id }}/reject">
+                        <button type="submit" class="btn btn-red">✕</button>
+                    </form>
+                </div>
                 {% else %}
-                <span style="color:#64748b;font-size:12px">{{ w.processed_at.strftime('%d.%m %H:%M') if w.processed_at else '—' }}</span>
+                <span style="color:var(--text-3);font-size:12px">
+                    {{ w.processed_at.strftime('%d.%m %H:%M') if w.processed_at else '—' }}
+                </span>
                 {% endif %}
             </td>
         </tr>
         {% endfor %}
+        </tbody>
     </table>
     {% else %}
-    <p style="color:#64748b">Заявок пока нет</p>
+    <div class="empty" style="padding:64px 24px">
+        <div class="empty-ico">📭</div>
+        <div class="empty-txt">Заявок пока нет</div>
+    </div>
     {% endif %}
 </div>
+
 {% endblock %}
