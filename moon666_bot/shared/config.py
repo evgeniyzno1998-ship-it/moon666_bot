@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     database_url: str
     database_url_sync: Optional[str] = None
 
+    # Channel invite link (used in bot subscription button)
+    channel_invite_link: str = "https://t.me/+your_invite_link"
+
     # Bonus amounts
     bonus_join: Decimal = Decimal("0.20")
     bonus_reaction: Decimal = Decimal("0.01")

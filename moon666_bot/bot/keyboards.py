@@ -1,4 +1,5 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from shared.config import settings
 
 
 def main_menu_kb() -> InlineKeyboardMarkup:
@@ -11,8 +12,8 @@ def main_menu_kb() -> InlineKeyboardMarkup:
     ])
 
 
-def check_subscription_kb(channel_username: str = "Moon666") -> InlineKeyboardMarkup:
+def check_subscription_kb() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="📢 Подписаться на канал", url=f"https://t.me/{channel_username}")],
+        [InlineKeyboardButton(text="📢 Подписаться на канал", url=settings.channel_invite_link)],
         [InlineKeyboardButton(text="✅ Я подписался", callback_data="check_subscription")],
     ])
