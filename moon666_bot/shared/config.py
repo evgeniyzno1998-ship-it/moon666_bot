@@ -1,5 +1,7 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import model_validator
 from decimal import Decimal
+from typing import Optional
 
 
 class Settings(BaseSettings):
@@ -16,14 +18,24 @@ class Settings(BaseSettings):
     jwt_secret: str
 
     # Database
+    # Railway provides DATABASE_URL as postgresql:// — sync URL is auto-derived if not set
     database_url: str
-    database_url_sync: str
+    database_url_sync: Optional[str] = None
 
     # Bonus amounts
     bonus_join: Decimal = Decimal("0.20")
     bonus_reaction: Decimal = Decimal("0.01")
     bonus_retention: Decimal = Decimal("0.05")
     min_withdrawal: Decimal = Decimal("10.00")
+
+    @model_validator(mode="after")
+    def derive_sync_url(self) -> "Settings":
+        if self.database_url_sync is None:
+            url = self.database_url
+            url = url.replace("postgresql+asyncpg://", "postgresql://")
+            url = url.replace("postgres://", "postgresql://")
+            self.database_url_sync = url
+        return self
 
 
 settings = Settings()
