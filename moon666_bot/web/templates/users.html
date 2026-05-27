@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-title">👥 Пользователи</div>
+<form method="get" style="margin-bottom:16px;display:flex;gap:8px">
+    <input type="text" name="search" placeholder="Поиск по username..." value="{{ search }}" style="width:240px">
+    <button type="submit" class="btn btn-green">Найти</button>
+    {% if search %}<a href="/users" class="btn" style="background:#1e293b;color:#94a3b8;text-decoration:none">Сбросить</a>{% endif %}
+</form>
+<div class="card">
+    {% if users %}
+    <table>
+        <tr><th>Пользователь</th><th>Баланс</th><th>Рефералов</th><th>Дата вступления</th></tr>
+        {% for u, ref_count in users %}
+        <tr>
+            <td>@{{ u.username or u.full_name }}</td>
+            <td style="color:#fbbf24">${{ "%.2f"|format(u.balance_usdt) }}</td>
+            <td style="color:#34d399">{{ ref_count }}</td>
+            <td style="color:#64748b">{{ u.joined_at.strftime('%d.%m.%Y') if u.joined_at else '—' }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p style="color:#64748b">{% if search %}Пользователи не найдены{% else %}Нет пользователей{% endif %}</p>
+    {% endif %}
+</div>
+{% endblock %}

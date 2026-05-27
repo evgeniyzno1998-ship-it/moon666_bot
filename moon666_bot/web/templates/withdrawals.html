@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-title">📤 Выводы</div>
+<div class="card">
+    {% if withdrawals %}
+    <table>
+        <tr><th>Пользователь</th><th>Сумма</th><th>Кошелёк</th><th>Дата</th><th>Статус</th><th>Действие</th></tr>
+        {% for w, u in withdrawals %}
+        <tr>
+            <td>@{{ u.username or u.full_name }}</td>
+            <td style="color:#fbbf24;font-weight:bold">${{ "%.2f"|format(w.amount_usdt) }}</td>
+            <td><code style="font-size:12px">{{ w.wallet_address }}</code></td>
+            <td style="color:#64748b">{{ w.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+            <td><span class="badge badge-{{ w.status.value }}">{{ w.status.value }}</span></td>
+            <td>
+                {% if w.status.value == 'pending' %}
+                <form method="post" action="/withdrawals/{{ w.id }}/approve" style="display:inline">
+                    <button type="submit" class="btn btn-green">✅ Выплатить</button>
+                </form>
+                <form method="post" action="/withdrawals/{{ w.id }}/reject" style="display:inline;margin-left:4px">
+                    <button type="submit" class="btn btn-red">❌</button>
+                </form>
+                {% else %}
+                <span style="color:#64748b;font-size:12px">{{ w.processed_at.strftime('%d.%m %H:%M') if w.processed_at else '—' }}</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p style="color:#64748b">Заявок пока нет</p>
+    {% endif %}
+</div>
+{% endblock %}

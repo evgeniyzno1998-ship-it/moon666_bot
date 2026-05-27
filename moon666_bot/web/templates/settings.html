@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-title">⚙️ Настройки</div>
+{% if saved %}
+<div style="background:#052e16;color:#4ade80;padding:10px 16px;border-radius:8px;margin-bottom:16px">
+    ✅ Настройки сохранены (активны до перезапуска)
+</div>
+{% endif %}
+<div class="card" style="max-width:420px">
+    <form method="post">
+        <h3 style="font-size:14px;color:#94a3b8;margin-bottom:16px">Бонусы (USDT)</h3>
+        <label style="font-size:13px;color:#64748b;display:block;margin-bottom:4px">За реферала (вступление)</label>
+        <input type="number" name="bonus_join" value="{{ settings.bonus_join }}" step="0.01" min="0" style="width:100%;margin-bottom:12px">
+        <label style="font-size:13px;color:#64748b;display:block;margin-bottom:4px">За первую реакцию</label>
+        <input type="number" name="bonus_reaction" value="{{ settings.bonus_reaction }}" step="0.01" min="0" style="width:100%;margin-bottom:12px">
+        <label style="font-size:13px;color:#64748b;display:block;margin-bottom:4px">За удержание 30 дней</label>
+        <input type="number" name="bonus_retention" value="{{ settings.bonus_retention }}" step="0.01" min="0" style="width:100%;margin-bottom:12px">
+        <label style="font-size:13px;color:#64748b;display:block;margin-bottom:4px">Минимальная сумма вывода (USDT)</label>
+        <input type="number" name="min_withdrawal" value="{{ settings.min_withdrawal }}" step="0.01" min="0" style="width:100%;margin-bottom:20px">
+        <button type="submit" class="btn btn-green" style="width:100%;padding:10px;font-size:14px">💾 Сохранить</button>
+    </form>
+</div>
+{% endblock %}
