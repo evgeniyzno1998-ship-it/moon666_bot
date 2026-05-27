@@ -71,3 +71,21 @@ async def test_transaction_created_on_bonus(db_session, two_users):
     assert tx.amount_usdt == Decimal("0.20")
     assert tx.type == TransactionType.referral_join
     assert tx.related_user_id == 1002
+
+
+@pytest.mark.asyncio
+async def test_credit_raises_when_referrer_missing(db_session):
+    referred = User(id=9998, full_name="Referred", balance_usdt=Decimal("0.00"))
+    db_session.add(referred)
+    await db_session.commit()
+    # Referral with referrer_id 9999 — no such user exists
+    # We can't insert it via FK-enforced SQLite easily, so test _credit directly
+    from bot.services.referral import _credit
+    from shared.models import TransactionType
+    # Create a mock referral-like object
+    class FakeReferral:
+        referrer_id = 9999
+        referred_id = 9998
+        id = 99
+    with pytest.raises(ValueError, match="9999"):
+        await _credit(db_session, FakeReferral(), Decimal("0.20"), TransactionType.referral_join)

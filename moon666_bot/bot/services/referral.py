@@ -1,4 +1,5 @@
 from decimal import Decimal
+from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from shared.models import Referral, Transaction, TransactionType, User
 from shared.config import settings
@@ -10,7 +11,10 @@ async def _credit(
     amount: Decimal,
     tx_type: TransactionType,
 ) -> None:
+    """Mutate referrer balance and insert Transaction. Does NOT commit — caller commits."""
     referrer = await session.get(User, referral.referrer_id)
+    if referrer is None:
+        raise ValueError(f"Referrer user {referral.referrer_id} not found for referral {referral.id}")
     referrer.balance_usdt += amount
     session.add(
         Transaction(
@@ -20,7 +24,6 @@ async def _credit(
             related_user_id=referral.referred_id,
         )
     )
-    await session.commit()
 
 
 async def award_join_bonus(session: AsyncSession, referral: Referral) -> None:
