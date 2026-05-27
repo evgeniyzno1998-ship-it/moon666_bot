@@ -43,6 +43,16 @@ async def approve_withdrawal(
     w = await session.get(Withdrawal, withdrawal_id)
     if w and w.status == WithdrawalStatus.pending:
         user = await session.get(User, w.user_id)
+        # Guard against concurrent double-approval or insufficient balance
+        if user.balance_usdt < w.amount_usdt:
+            w.status = WithdrawalStatus.rejected
+            w.processed_at = datetime.now(timezone.utc)
+            await session.commit()
+            await send_telegram_notification(
+                w.user_id,
+                f"❌ Заявка на вывод отклонена: недостаточно средств на балансе.",
+            )
+            return RedirectResponse(url="/withdrawals", status_code=302)
         w.status = WithdrawalStatus.approved
         w.processed_at = datetime.now(timezone.utc)
         user.balance_usdt -= w.amount_usdt

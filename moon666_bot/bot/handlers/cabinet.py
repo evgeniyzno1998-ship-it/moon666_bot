@@ -10,9 +10,6 @@ from bot.keyboards import main_menu_kb
 
 router = Router()
 
-WITHDRAWAL_TARGET = settings.min_withdrawal
-
-
 def _progress_bar(balance: Decimal, target: Decimal, width: int = 10) -> str:
     pct = min(float(balance / target), 1.0)
     filled = int(pct * width)
@@ -45,8 +42,9 @@ async def cb_cabinet(callback: CallbackQuery, session: AsyncSession) -> None:
     total_earned = earned_result.scalar() or Decimal("0.00")
 
     balance = user.balance_usdt
-    progress = _progress_bar(balance, WITHDRAWAL_TARGET)
-    remaining = max(WITHDRAWAL_TARGET - balance, Decimal("0.00"))
+    target = settings.min_withdrawal
+    progress = _progress_bar(balance, target)
+    remaining = max(target - balance, Decimal("0.00"))
 
     bot_me = await callback.bot.get_me()
     ref_link = f"https://t.me/{bot_me.username}?start={user.id}"

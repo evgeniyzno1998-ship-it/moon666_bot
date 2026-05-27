@@ -16,8 +16,11 @@ from bot.services.scheduler import start_scheduler
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+_scheduler = None  # module-level reference
+
 
 async def on_startup(bot: Bot):
+    global _scheduler
     # Create tables if missing (in prod use alembic)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -26,7 +29,7 @@ async def on_startup(bot: Bot):
         BotCommand(command="start", description="Главное меню"),
         BotCommand(command="cancel", description="Отмена"),
     ])
-    scheduler = start_scheduler(bot)
+    _scheduler = start_scheduler(bot)
     logger.info("Bot started")
 
 

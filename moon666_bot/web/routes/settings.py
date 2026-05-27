@@ -35,14 +35,23 @@ async def settings_save(
     min_withdrawal: str = Form(...),
     _: bool = Depends(get_current_admin),
 ):
-    # Update runtime values (apply until restart — persisted in .env manually)
-    app_settings.bonus_join = Decimal(bonus_join)
-    app_settings.bonus_reaction = Decimal(bonus_reaction)
-    app_settings.bonus_retention = Decimal(bonus_retention)
-    app_settings.min_withdrawal = Decimal(min_withdrawal)
+    try:
+        app_settings.bonus_join = Decimal(bonus_join)
+        app_settings.bonus_reaction = Decimal(bonus_reaction)
+        app_settings.bonus_retention = Decimal(bonus_retention)
+        app_settings.min_withdrawal = Decimal(min_withdrawal)
+    except Exception as e:
+        logger.warning("Invalid settings input: %s", e)
+        return templates.TemplateResponse("settings.html", {
+            "request": request,
+            "active": "settings",
+            "settings": app_settings,
+            "saved": False,
+            "error": "Некорректное значение. Используйте числа, например: 0.20",
+        })
+
     logger.info("Settings updated: join=%s reaction=%s retention=%s min_withdrawal=%s",
                 bonus_join, bonus_reaction, bonus_retention, min_withdrawal)
-
     return templates.TemplateResponse("settings.html", {
         "request": request,
         "active": "settings",

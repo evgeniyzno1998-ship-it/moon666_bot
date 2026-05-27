@@ -1,11 +1,10 @@
 from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, Request
+from fastapi.responses import RedirectResponse
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 
 from shared.config import settings
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
 
@@ -28,5 +27,5 @@ def verify_token(token: str) -> bool:
 async def get_current_admin(request: Request):
     token = request.cookies.get("access_token")
     if not token or not verify_token(token):
-        raise HTTPException(status_code=302, headers={"Location": "/login"})
+        return RedirectResponse(url="/login", status_code=302)
     return True

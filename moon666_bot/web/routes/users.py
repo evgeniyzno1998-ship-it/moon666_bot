@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request, Depends, Query
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import select, func
+from sqlalchemy import select, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from pathlib import Path
 
@@ -27,7 +27,12 @@ async def users_page(
         .order_by(func.count(Referral.id).desc())
     )
     if search:
-        query = query.where(User.username.ilike(f"%{search}%"))
+        query = query.where(
+            or_(
+                User.username.ilike(f"%{search}%"),
+                User.full_name.ilike(f"%{search}%"),
+            )
+        )
 
     result = await session.execute(query)
     users = result.all()
