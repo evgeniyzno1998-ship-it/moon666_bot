@@ -31,6 +31,25 @@ async def on_startup(bot: Bot):
         BotCommand(command="start", description="Main menu"),
         BotCommand(command="cancel", description="Cancel"),
     ])
+
+    # Bot description — shown on profile page (max 512 chars)
+    await bot.set_my_description(
+        "🌙 Moon666 — Get Paid to Grow Our Community\n\n"
+        "Earn real USDT simply by sharing your referral link:\n\n"
+        "💰 +$0.20 — your friend joins the channel\n"
+        "⚡ +$0.01 — they react to a post\n"
+        "🎯 +$0.05 — they stay 30 days\n\n"
+        "Up to $0.26 per referral. Unlimited referrals.\n\n"
+        "📤 Withdraw to any USDT wallet (TRC20 / BEP20 / ERC20) once you hit $10.\n\n"
+        "No investment. No risk. Just share — and earn.\n\n"
+        "Press Start ↓"
+    )
+
+    # Short description — shown before the user presses Start (max 120 chars)
+    await bot.set_my_short_description(
+        "Earn USDT by inviting friends to Moon666. Up to $0.26 per referral. Withdraw anytime. 🚀"
+    )
+
     _scheduler = start_scheduler(bot)
     logger.info("Bot started")
 
