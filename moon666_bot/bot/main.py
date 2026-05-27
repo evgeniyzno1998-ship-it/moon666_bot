@@ -11,6 +11,7 @@ from bot.handlers.start import router as start_router
 from bot.handlers.cabinet import router as cabinet_router
 from bot.handlers.withdrawal import router as withdrawal_router
 from bot.handlers.reactions import router as reactions_router
+from bot.handlers.channel_member import router as channel_member_router
 from bot.services.scheduler import start_scheduler
 from bot.middlewares.db import DbSessionMiddleware
 
@@ -40,6 +41,7 @@ async def main():
 
     dp.update.middleware(DbSessionMiddleware())
 
+    dp.include_router(channel_member_router)
     dp.include_router(start_router)
     dp.include_router(cabinet_router)
     dp.include_router(withdrawal_router)
@@ -47,7 +49,7 @@ async def main():
 
     dp.startup.register(on_startup)
 
-    await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types())
+    await dp.start_polling(bot, allowed_updates=dp.resolve_used_update_types() + ["chat_member"])
 
 
 if __name__ == "__main__":
