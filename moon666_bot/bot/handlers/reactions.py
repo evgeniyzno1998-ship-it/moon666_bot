@@ -1,3 +1,5 @@
+import logging
+
 from aiogram import Router
 from aiogram.types import MessageReactionUpdated
 from sqlalchemy import select
@@ -8,6 +10,7 @@ from shared.models import ChannelReaction, Referral
 from shared.config import settings
 from bot.services.referral import award_reaction_bonus
 
+logger = logging.getLogger(__name__)
 router = Router()
 
 
@@ -21,7 +24,8 @@ async def on_channel_reaction(event: MessageReactionUpdated, session: AsyncSessi
     if not user_id:
         return
 
-    # Save reaction record (deduplication guard — unique constraint on user_id)
+    # One reaction bonus per user across ALL posts — UniqueConstraint on user_id enforces this.
+    # First reaction triggers deduplication; subsequent reactions are rejected by the DB constraint.
     reaction = ChannelReaction(user_id=user_id, post_id=event.message_id)
     session.add(reaction)
     try:
@@ -43,5 +47,5 @@ async def on_channel_reaction(event: MessageReactionUpdated, session: AsyncSessi
                 f"⚡ Твой реферал поставил реакцию на пост!\n"
                 f"💰 +{settings.bonus_reaction} USDT начислено.",
             )
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Failed to notify referrer %s: %s", ref.referrer_id, e)

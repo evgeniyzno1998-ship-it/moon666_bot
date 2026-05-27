@@ -2,6 +2,7 @@ import logging
 from datetime import datetime, timezone, timedelta
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from shared.database import async_session_maker
 from shared.models import User, Referral
@@ -52,8 +53,6 @@ async def check_retention(bot) -> None:
 
 def start_scheduler(bot):
     """Start APScheduler for retention check every hour."""
-    from apscheduler.schedulers.asyncio import AsyncIOScheduler
-
     scheduler = AsyncIOScheduler()
     scheduler.add_job(
         check_retention,

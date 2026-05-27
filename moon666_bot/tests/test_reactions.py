@@ -1,8 +1,10 @@
 import pytest
 from decimal import Decimal
+from unittest.mock import AsyncMock, MagicMock, patch
 from sqlalchemy import select
 from shared.models import User, Referral, ChannelReaction
 from bot.handlers.reactions import on_channel_reaction
+import bot.handlers.reactions as reactions_mod
 
 
 @pytest.mark.asyncio
@@ -12,15 +14,12 @@ async def test_first_reaction_saves_record(db_session):
     db_session.add(user)
     await db_session.commit()
 
-    from unittest.mock import AsyncMock, MagicMock
     event = MagicMock()
     event.chat.id = -1001234567890
     event.user.id = 7001
     event.message_id = 42
     event.bot = AsyncMock()
 
-    import bot.handlers.reactions as reactions_mod
-    from unittest.mock import patch
     with patch.object(reactions_mod.settings, 'channel_id', -1001234567890):
         await on_channel_reaction(event, db_session)
 
@@ -40,15 +39,12 @@ async def test_second_reaction_ignored(db_session):
     db_session.add_all([user, cr])
     await db_session.commit()
 
-    from unittest.mock import AsyncMock, MagicMock
     event = MagicMock()
     event.chat.id = -1001234567890
     event.user.id = 7002
     event.message_id = 20  # different post, same user — still rejected by unique constraint
     event.bot = AsyncMock()
 
-    import bot.handlers.reactions as reactions_mod
-    from unittest.mock import patch
     with patch.object(reactions_mod.settings, 'channel_id', -1001234567890):
         await on_channel_reaction(event, db_session)
 
@@ -73,15 +69,12 @@ async def test_reaction_credits_referrer(db_session):
     db_session.add(ref)
     await db_session.commit()
 
-    from unittest.mock import AsyncMock, MagicMock
     event = MagicMock()
     event.chat.id = -1001234567890
     event.user.id = 8002
     event.message_id = 99
     event.bot = AsyncMock()
 
-    import bot.handlers.reactions as reactions_mod
-    from unittest.mock import patch
     with patch.object(reactions_mod.settings, 'channel_id', -1001234567890):
         await on_channel_reaction(event, db_session)
 
@@ -97,15 +90,12 @@ async def test_reaction_wrong_channel_ignored(db_session):
     db_session.add(user)
     await db_session.commit()
 
-    from unittest.mock import AsyncMock, MagicMock
     event = MagicMock()
     event.chat.id = -9999999999  # wrong channel
     event.user.id = 9001
     event.message_id = 1
     event.bot = AsyncMock()
 
-    import bot.handlers.reactions as reactions_mod
-    from unittest.mock import patch
     with patch.object(reactions_mod.settings, 'channel_id', -1001234567890):
         await on_channel_reaction(event, db_session)
 
@@ -113,3 +103,45 @@ async def test_reaction_wrong_channel_ignored(db_session):
         select(ChannelReaction).where(ChannelReaction.user_id == 9001)
     )
     assert result.scalar_one_or_none() is None
+
+
+@pytest.mark.asyncio
+async def test_check_retention_awards_bonus(db_session):
+    """check_retention credits referrer for users who stayed 30+ days."""
+    from datetime import datetime, timezone, timedelta
+    from bot.services.scheduler import check_retention
+
+    referrer = User(id=9101, full_name="Referrer", balance_usdt=Decimal("0.00"))
+    referred = User(
+        id=9102,
+        full_name="LongTimer",
+        balance_usdt=Decimal("0.00"),
+        channel_joined_at=datetime.now(timezone.utc) - timedelta(days=31),
+    )
+    db_session.add_all([referrer, referred])
+    await db_session.commit()
+
+    ref = Referral(referrer_id=9101, referred_id=9102, retention_bonus_paid=False)
+    db_session.add(ref)
+    await db_session.commit()
+
+    # Mock bot.get_chat_member to return "member" status
+    mock_member = MagicMock()
+    mock_member.status = "member"
+    mock_bot = AsyncMock()
+    mock_bot.get_chat_member = AsyncMock(return_value=mock_member)
+    mock_bot.send_message = AsyncMock()
+
+    # Patch async_session_maker to use our test session
+    with patch("bot.services.scheduler.async_session_maker") as mock_sm:
+        # Make the context manager yield our db_session
+        mock_cm = AsyncMock()
+        mock_cm.__aenter__ = AsyncMock(return_value=db_session)
+        mock_cm.__aexit__ = AsyncMock(return_value=False)
+        mock_sm.return_value = mock_cm
+
+        await check_retention(mock_bot)
+
+    await db_session.refresh(referrer)
+    assert referrer.balance_usdt == Decimal("0.05")
+    assert ref.retention_bonus_paid is True
