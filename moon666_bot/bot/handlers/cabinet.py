@@ -10,6 +10,7 @@ from bot.keyboards import main_menu_kb
 
 router = Router()
 
+
 def _progress_bar(balance: Decimal, target: Decimal, width: int = 10) -> str:
     pct = min(float(balance / target), 1.0)
     filled = int(pct * width)
@@ -21,7 +22,7 @@ def _progress_bar(balance: Decimal, target: Decimal, width: int = 10) -> str:
 async def cb_cabinet(callback: CallbackQuery, session: AsyncSession) -> None:
     user = await session.get(User, callback.from_user.id)
     if not user:
-        await callback.answer("Сначала напиши /start")
+        await callback.answer("Please send /start first")
         return
 
     ref_count_result = await session.execute(
@@ -54,9 +55,9 @@ async def cb_cabinet(callback: CallbackQuery, session: AsyncSession) -> None:
         f"┌─────────────────────────┐\n"
         f"│  <b>{balance:.2f} USDT</b>\n"
         f"│  {progress}\n"
-        f"│  До вывода: {remaining:.2f} USDT\n"
+        f"│  Until withdrawal: {remaining:.2f} USDT\n"
         f"└─────────────────────────┘\n\n"
-        f"👥 {ref_count} рефералов · 💰 заработано {total_earned:.2f} USDT\n\n"
+        f"👥 {ref_count} referrals · 💰 earned {total_earned:.2f} USDT\n\n"
         f"🔗 <code>{ref_link}</code>"
     )
     await callback.message.edit_text(text, reply_markup=main_menu_kb(), parse_mode="HTML")
@@ -75,9 +76,9 @@ async def cb_my_referrals(callback: CallbackQuery, session: AsyncSession) -> Non
     rows = result.all()
 
     if not rows:
-        text = "👥 У тебя пока нет рефералов.\n\nПоделись своей ссылкой!"
+        text = "👥 You have no referrals yet.\n\nShare your link to start earning!"
     else:
-        lines = ["👥 <b>Мои рефералы:</b>\n"]
+        lines = ["👥 <b>My Referrals:</b>\n"]
         for ref, referred_user in rows:
             earned = Decimal("0.00")
             if ref.join_bonus_paid:
@@ -100,13 +101,13 @@ async def cb_my_link(callback: CallbackQuery) -> None:
     ref_link = f"https://t.me/{bot_me.username}?start={callback.from_user.id}"
     max_per_ref = settings.bonus_join + settings.bonus_reaction + settings.bonus_retention
     text = (
-        f"🔗 <b>Твоя реферальная ссылка:</b>\n\n"
+        f"🔗 <b>Your Referral Link:</b>\n\n"
         f"<code>{ref_link}</code>\n\n"
-        f"Поделись с друзьями! За каждого подписчика:\n"
-        f"• +{settings.bonus_join} USDT — подписался\n"
-        f"• +{settings.bonus_reaction} USDT — поставил реакцию\n"
-        f"• +{settings.bonus_retention} USDT — остался 30 дней\n\n"
-        f"Максимум <b>{max_per_ref:.2f} USDT</b> с одного человека"
+        f"Share with friends! For each subscriber:\n"
+        f"• +{settings.bonus_join} USDT — subscribed\n"
+        f"• +{settings.bonus_reaction} USDT — reacted to a post\n"
+        f"• +{settings.bonus_retention} USDT — stayed 30 days\n\n"
+        f"Maximum <b>{max_per_ref:.2f} USDT</b> per person"
     )
     await callback.message.edit_text(text, reply_markup=main_menu_kb(), parse_mode="HTML")
     await callback.answer()
@@ -124,13 +125,13 @@ async def cb_top_referrals(callback: CallbackQuery, session: AsyncSession) -> No
     rows = result.all()
 
     medals = ["🥇", "🥈", "🥉"] + ["🏅"] * 7
-    lines = ["🏆 <b>Топ рефереров:</b>\n"]
+    lines = ["🏆 <b>Top Referrers:</b>\n"]
     for i, (username, full_name, cnt) in enumerate(rows):
         name = f"@{username}" if username else full_name
-        lines.append(f"{medals[i]} {name} — {cnt} реф.")
+        lines.append(f"{medals[i]} {name} — {cnt} ref{'s' if cnt != 1 else ''}.")
 
     if not rows:
-        lines.append("Пока никого нет. Будь первым!")
+        lines.append("No one yet. Be the first!")
 
     await callback.message.edit_text(
         "\n".join(lines), reply_markup=main_menu_kb(), parse_mode="HTML"

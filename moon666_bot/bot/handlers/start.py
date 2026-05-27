@@ -65,9 +65,10 @@ async def cmd_start(message: Message, command: CommandObject, session: AsyncSess
         pass
 
     await message.answer(
-        "🌙 Добро пожаловать в Moon666!\n\n"
-        "Чтобы участвовать в реферальной программе, подпишись на канал:",
+        "🌙 <b>Welcome to Moon666!</b>\n\n"
+        "To join the referral program, subscribe to our channel:",
         reply_markup=check_subscription_kb(),
+        parse_mode="HTML",
     )
 
 
@@ -75,17 +76,17 @@ async def cmd_start(message: Message, command: CommandObject, session: AsyncSess
 async def callback_check_subscription(callback: CallbackQuery, session: AsyncSession) -> None:
     user = await session.get(User, callback.from_user.id)
     if not user:
-        await callback.answer("Сначала напиши /start", show_alert=True)
+        await callback.answer("Please send /start first", show_alert=True)
         return
 
     bot: Bot = callback.bot
     try:
         member = await bot.get_chat_member(settings.channel_id, user.id)
         if member.status not in ("member", "administrator", "creator"):
-            await callback.answer("Ты ещё не подписан на канал 😕", show_alert=True)
+            await callback.answer("You haven't subscribed yet 😕", show_alert=True)
             return
     except Exception:
-        await callback.answer("Не удалось проверить. Попробуй позже.", show_alert=True)
+        await callback.answer("Couldn't verify. Please try again later.", show_alert=True)
         return
 
     await callback.message.delete()
@@ -110,17 +111,17 @@ async def _on_subscription_confirmed(message: Message, session: AsyncSession, us
             try:
                 await bot.send_message(
                     ref.referrer_id,
-                    f"🎉 По твоей ссылке подписался новый человек!\n"
-                    f"💰 +{settings.bonus_join} USDT начислено на баланс.",
+                    f"🎉 Someone joined via your referral link!\n"
+                    f"💰 +{settings.bonus_join} USDT added to your balance.",
                 )
             except Exception:
                 pass
 
     await message.answer(
-        f"✅ Подписка подтверждена!\n\n"
-        f"🌙 <b>Moon666</b> — реферальная программа\n"
-        f"Приглашай друзей и зарабатывай USDT!\n\n"
-        f"Выбери действие:",
+        f"✅ <b>Subscription confirmed!</b>\n\n"
+        f"🌙 <b>Moon666</b> — Referral Program\n"
+        f"Invite friends and earn USDT!\n\n"
+        f"Choose an action:",
         reply_markup=main_menu_kb(),
         parse_mode="HTML",
     )

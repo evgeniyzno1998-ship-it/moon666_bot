@@ -28,8 +28,8 @@ async def on_startup(bot: Bot):
         await conn.run_sync(Base.metadata.create_all)
 
     await bot.set_my_commands([
-        BotCommand(command="start", description="Главное меню"),
-        BotCommand(command="cancel", description="Отмена"),
+        BotCommand(command="start", description="Main menu"),
+        BotCommand(command="cancel", description="Cancel"),
     ])
     _scheduler = start_scheduler(bot)
     logger.info("Bot started")

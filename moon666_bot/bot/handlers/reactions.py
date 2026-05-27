@@ -44,8 +44,8 @@ async def on_channel_reaction(event: MessageReactionUpdated, session: AsyncSessi
         try:
             await event.bot.send_message(
                 ref.referrer_id,
-                f"⚡ Твой реферал поставил реакцию на пост!\n"
-                f"💰 +{settings.bonus_reaction} USDT начислено.",
+                f"⚡ Your referral reacted to a post!\n"
+                f"💰 +{settings.bonus_reaction} USDT added to your balance.",
             )
         except Exception as e:
             logger.warning("Failed to notify referrer %s: %s", ref.referrer_id, e)

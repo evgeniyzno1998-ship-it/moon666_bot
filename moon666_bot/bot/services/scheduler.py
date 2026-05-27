@@ -44,8 +44,8 @@ async def check_retention(bot) -> None:
             try:
                 await bot.send_message(
                     ref.referrer_id,
-                    f"🎯 Твой реферал остался в канале 30 дней!\n"
-                    f"💰 +{settings.bonus_retention} USDT начислено.",
+                    f"🎯 Your referral has been in the channel for 30 days!\n"
+                    f"💰 +{settings.bonus_retention} USDT added to your balance.",
                 )
             except Exception:
                 pass

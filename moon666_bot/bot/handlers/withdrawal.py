@@ -21,23 +21,23 @@ class WithdrawalForm(StatesGroup):
 async def cb_withdrawal(callback: CallbackQuery, state: FSMContext, session: AsyncSession) -> None:
     user = await session.get(User, callback.from_user.id)
     if not user:
-        await callback.answer("Сначала напиши /start")
+        await callback.answer("Please send /start first")
         return
 
     if user.balance_usdt < settings.min_withdrawal:
         remaining = settings.min_withdrawal - user.balance_usdt
         await callback.answer(
-            f"Минимальная сумма для вывода: {settings.min_withdrawal} USDT\n"
-            f"Тебе не хватает ещё {remaining:.2f} USDT",
+            f"Minimum withdrawal: {settings.min_withdrawal} USDT\n"
+            f"You need {remaining:.2f} more USDT",
             show_alert=True,
         )
         return
 
     await state.set_state(WithdrawalForm.waiting_wallet)
     await callback.message.answer(
-        f"💳 Введи адрес кошелька для вывода <b>{user.balance_usdt:.2f} USDT</b>:\n\n"
-        f"Поддерживается: TRC20 (USDT), BEP20, ERC20\n\n"
-        f"Отправь /cancel для отмены.",
+        f"💳 Enter your wallet address to withdraw <b>{user.balance_usdt:.2f} USDT</b>:\n\n"
+        f"Supported networks: TRC20 (USDT), BEP20, ERC20\n\n"
+        f"Send /cancel to cancel.",
         parse_mode="HTML",
     )
     await callback.answer()
@@ -46,7 +46,7 @@ async def cb_withdrawal(callback: CallbackQuery, state: FSMContext, session: Asy
 @router.message(WithdrawalForm.waiting_wallet, Command("cancel"))
 async def cmd_cancel_withdrawal(message: Message, state: FSMContext) -> None:
     await state.clear()
-    await message.answer("❌ Вывод отменён.", reply_markup=main_menu_kb())
+    await message.answer("❌ Withdrawal cancelled.", reply_markup=main_menu_kb())
 
 
 @router.message(WithdrawalForm.waiting_wallet)
@@ -54,12 +54,12 @@ async def process_wallet_address(message: Message, state: FSMContext, session: A
     wallet = message.text.strip()
 
     if len(wallet) < 20:
-        await message.answer("❌ Некорректный адрес. Попробуй ещё раз или /cancel для отмены.")
+        await message.answer("❌ Invalid address. Please try again or send /cancel to cancel.")
         return
 
     user = await session.get(User, message.from_user.id)
     if not user or user.balance_usdt < settings.min_withdrawal:
-        await message.answer("❌ Недостаточно средств.")
+        await message.answer("❌ Insufficient balance.")
         await state.clear()
         return
 
@@ -72,8 +72,8 @@ async def process_wallet_address(message: Message, state: FSMContext, session: A
     )
     if existing_pending.scalar_one_or_none():
         await message.answer(
-            "⏳ У тебя уже есть активная заявка на вывод.\n"
-            "Дождись её обработки или обратись в поддержку.",
+            "⏳ You already have a pending withdrawal request.\n"
+            "Please wait for it to be processed or contact support.",
             reply_markup=main_menu_kb(),
         )
         await state.clear()
@@ -90,24 +90,24 @@ async def process_wallet_address(message: Message, state: FSMContext, session: A
 
     await state.clear()
 
-    # Notify owner
+    # Notify admin
     try:
         await message.bot.send_message(
             settings.admin_tg_id,
-            f"💸 <b>Новая заявка на вывод!</b>\n\n"
+            f"💸 <b>New Withdrawal Request!</b>\n\n"
             f"👤 @{user.username or user.full_name}\n"
             f"💰 {withdrawal.amount_usdt:.2f} USDT\n"
             f"💳 <code>{wallet}</code>\n\n"
-            f"ID заявки: #{withdrawal.id}",
+            f"Request ID: #{withdrawal.id}",
             parse_mode="HTML",
         )
     except Exception:
         pass
 
     await message.answer(
-        f"✅ Заявка на вывод <b>{withdrawal.amount_usdt:.2f} USDT</b> принята!\n\n"
-        f"Кошелёк: <code>{wallet}</code>\n\n"
-        f"Мы обработаем её в течение 24 часов.",
+        f"✅ Withdrawal request for <b>{withdrawal.amount_usdt:.2f} USDT</b> submitted!\n\n"
+        f"Wallet: <code>{wallet}</code>\n\n"
+        f"We'll process it within 24 hours.",
         reply_markup=main_menu_kb(),
         parse_mode="HTML",
     )
