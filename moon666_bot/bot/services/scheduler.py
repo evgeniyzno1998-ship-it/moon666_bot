@@ -1,4 +1,4 @@
-import asyncio
+import logging
 from datetime import datetime, timezone, timedelta
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,6 +7,8 @@ from shared.database import async_session_maker
 from shared.models import User, Referral
 from shared.config import settings
 from bot.services.referral import award_retention_bonus
+
+logger = logging.getLogger(__name__)
 
 
 async def check_retention(bot) -> None:
@@ -31,7 +33,8 @@ async def check_retention(bot) -> None:
                 member = await bot.get_chat_member(settings.channel_id, referred_user.id)
                 if member.status not in ("member", "administrator", "creator"):
                     continue
-            except Exception:
+            except Exception as e:
+                logger.warning("get_chat_member failed for user %s: %s", referred_user.id, e)
                 continue
 
             await award_retention_bonus(session, ref)
@@ -47,7 +50,7 @@ async def check_retention(bot) -> None:
                 pass
 
 
-def start_scheduler(bot) -> None:
+def start_scheduler(bot):
     """Start APScheduler for retention check every hour."""
     from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -60,3 +63,4 @@ def start_scheduler(bot) -> None:
         id="retention_check",
     )
     scheduler.start()
+    return scheduler

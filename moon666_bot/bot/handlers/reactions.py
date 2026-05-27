@@ -1,6 +1,7 @@
 from aiogram import Router
 from aiogram.types import MessageReactionUpdated
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from shared.models import ChannelReaction, Referral
@@ -20,16 +21,14 @@ async def on_channel_reaction(event: MessageReactionUpdated, session: AsyncSessi
     if not user_id:
         return
 
-    # Check if reaction from this user already recorded
-    existing = await session.execute(
-        select(ChannelReaction).where(ChannelReaction.user_id == user_id)
-    )
-    if existing.scalar_one_or_none():
-        return  # already counted
-
-    # Save reaction
+    # Save reaction record (deduplication guard — unique constraint on user_id)
     reaction = ChannelReaction(user_id=user_id, post_id=event.message_id)
     session.add(reaction)
+    try:
+        await session.commit()  # always persist deduplication record
+    except IntegrityError:
+        await session.rollback()
+        return  # concurrent duplicate, safe to ignore
 
     # Find referral record and credit bonus to referrer
     ref_result = await session.execute(
@@ -46,5 +45,3 @@ async def on_channel_reaction(event: MessageReactionUpdated, session: AsyncSessi
             )
         except Exception:
             pass
-    else:
-        await session.commit()
