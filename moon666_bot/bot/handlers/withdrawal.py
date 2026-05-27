@@ -1,7 +1,9 @@
 from aiogram import Router
+from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from shared.models import User, Withdrawal, WithdrawalStatus
@@ -41,6 +43,12 @@ async def cb_withdrawal(callback: CallbackQuery, state: FSMContext, session: Asy
     await callback.answer()
 
 
+@router.message(WithdrawalForm.waiting_wallet, Command("cancel"))
+async def cmd_cancel_withdrawal(message: Message, state: FSMContext) -> None:
+    await state.clear()
+    await message.answer("❌ Вывод отменён.", reply_markup=main_menu_kb())
+
+
 @router.message(WithdrawalForm.waiting_wallet)
 async def process_wallet_address(message: Message, state: FSMContext, session: AsyncSession) -> None:
     wallet = message.text.strip()
@@ -52,6 +60,22 @@ async def process_wallet_address(message: Message, state: FSMContext, session: A
     user = await session.get(User, message.from_user.id)
     if not user or user.balance_usdt < settings.min_withdrawal:
         await message.answer("❌ Недостаточно средств.")
+        await state.clear()
+        return
+
+    # Check for existing pending withdrawal
+    existing_pending = await session.execute(
+        select(Withdrawal).where(
+            Withdrawal.user_id == user.id,
+            Withdrawal.status == WithdrawalStatus.pending,
+        )
+    )
+    if existing_pending.scalar_one_or_none():
+        await message.answer(
+            "⏳ У тебя уже есть активная заявка на вывод.\n"
+            "Дождись её обработки или обратись в поддержку.",
+            reply_markup=main_menu_kb(),
+        )
         await state.clear()
         return
 

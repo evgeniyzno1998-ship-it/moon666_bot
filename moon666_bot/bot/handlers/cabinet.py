@@ -4,7 +4,7 @@ from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from decimal import Decimal
 
-from shared.models import User, Referral, Transaction
+from shared.models import User, Referral, Transaction, TransactionType
 from shared.config import settings
 from bot.keyboards import main_menu_kb
 
@@ -33,7 +33,14 @@ async def cb_cabinet(callback: CallbackQuery, session: AsyncSession) -> None:
     ref_count = ref_count_result.scalar() or 0
 
     earned_result = await session.execute(
-        select(func.sum(Transaction.amount_usdt)).where(Transaction.user_id == user.id)
+        select(func.sum(Transaction.amount_usdt)).where(
+            Transaction.user_id == user.id,
+            Transaction.type.in_([
+                TransactionType.referral_join,
+                TransactionType.referral_reaction,
+                TransactionType.referral_retention,
+            ])
+        )
     )
     total_earned = earned_result.scalar() or Decimal("0.00")
 
