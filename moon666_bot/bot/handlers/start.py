@@ -31,8 +31,13 @@ async def get_or_create_user(session: AsyncSession, tg_user) -> tuple[User, bool
     return user, True
 
 
-async def _record_referral(session: AsyncSession, user: User, referrer_id_str: str) -> None:
-    """Create Referral record if referrer exists and is not the user themselves."""
+async def _record_referral(
+    session: AsyncSession,
+    user: User,
+    referrer_id_str: str,
+    bot: Bot | None = None,
+) -> None:
+    """Create Referral record if referrer exists and passes all anti-fraud checks."""
     try:
         referrer_id = int(referrer_id_str)
     except (ValueError, TypeError):
@@ -43,6 +48,10 @@ async def _record_referral(session: AsyncSession, user: User, referrer_id_str: s
     if not referrer:
         return
 
+    # Anti-fraud: block if referred user's Telegram ID is above the configured threshold
+    if settings.min_referred_user_id is not None and user.id > settings.min_referred_user_id:
+        return
+
     # Anti-fraud: daily referral limit per referrer
     today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
     daily_count_res = await session.execute(
@@ -51,8 +60,7 @@ async def _record_referral(session: AsyncSession, user: User, referrer_id_str: s
             Referral.created_at >= today_start,
         )
     )
-    daily_count = daily_count_res.scalar() or 0
-    if daily_count >= settings.max_daily_referrals:
+    if (daily_count_res.scalar() or 0) >= settings.max_daily_referrals:
         return
 
     user.referred_by = referrer_id
@@ -66,9 +74,8 @@ async def cmd_start(message: Message, command: CommandObject, session: AsyncSess
     user, is_new = await get_or_create_user(session, message.from_user)
 
     if is_new and command.args:
-        await _record_referral(session, user, command.args)
+        await _record_referral(session, user, command.args, bot=message.bot)
 
-    # Check channel subscription
     bot: Bot = message.bot
     try:
         member = await bot.get_chat_member(settings.channel_id, user.id)
@@ -108,20 +115,21 @@ async def callback_check_subscription(callback: CallbackQuery, session: AsyncSes
     await callback.answer()
 
 
-async def _on_subscription_confirmed(message: Message, session: AsyncSession, user: User, bot: Bot) -> None:
+async def _on_subscription_confirmed(
+    message: Message, session: AsyncSession, user: User, bot: Bot
+) -> None:
     """Called when subscription to the channel is confirmed."""
     if not user.channel_joined_at:
         user.channel_joined_at = datetime.now(timezone.utc)
         await session.commit()
 
-    # Award join bonus to referrer if applicable
     if user.referred_by:
         result = await session.execute(
             select(Referral).where(Referral.referred_id == user.id)
         )
         ref = result.scalar_one_or_none()
         if ref:
-            await award_join_bonus(session, ref)
+            await award_join_bonus(session, ref, bot=bot)
             try:
                 await bot.send_message(
                     ref.referrer_id,
@@ -140,7 +148,6 @@ async def _on_subscription_confirmed(message: Message, session: AsyncSession, us
         parse_mode="HTML",
     )
 
-    # Fire onboarding sequence (non-blocking)
     schedule_onboarding(
         bot, user.id,
         settings.bonus_join,
