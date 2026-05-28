@@ -191,7 +191,9 @@ async def cb_my_card(callback: CallbackQuery, session: AsyncSession) -> None:
             ),
             parse_mode="HTML",
         )
-    except Exception as e:
-        await callback.message.answer(f"⚠️ Could not generate card: {e}")
+    except Exception:
+        import logging
+        logging.getLogger(__name__).exception("Card generation failed for user %s", user.id)
+        await callback.message.answer("⚠️ Could not generate your card. Please try again later.")
 
     await callback.answer()
