@@ -50,7 +50,7 @@ async def new_campaign_form(
 async def create_campaign(
     name: str = Form(...),
     bonus_multiplier: Decimal = Form(...),
-    applies_to: str = Form(...),
+    applies_to: CampaignBonusType = Form(...),
     starts_at: str = Form(...),
     ends_at: str = Form(...),
     session: AsyncSession = Depends(get_session),
@@ -59,7 +59,7 @@ async def create_campaign(
     campaign = Campaign(
         name=name,
         bonus_multiplier=bonus_multiplier,
-        applies_to=CampaignBonusType(applies_to),
+        applies_to=applies_to,
         starts_at=datetime.fromisoformat(starts_at).replace(tzinfo=timezone.utc),
         ends_at=datetime.fromisoformat(ends_at).replace(tzinfo=timezone.utc),
     )
@@ -91,7 +91,7 @@ async def update_campaign(
     campaign_id: int,
     name: str = Form(...),
     bonus_multiplier: Decimal = Form(...),
-    applies_to: str = Form(...),
+    applies_to: CampaignBonusType = Form(...),
     starts_at: str = Form(...),
     ends_at: str = Form(...),
     session: AsyncSession = Depends(get_session),

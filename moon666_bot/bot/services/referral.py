@@ -59,6 +59,7 @@ async def award_join_bonus(
     referral.join_bonus_paid = True
     await session.commit()
     if bot:
+        # Deferred import to avoid circular dependency (achievements → referral → achievements)
         from bot.services.achievements import check_and_award_achievements
         await check_and_award_achievements(session, referral.referrer_id, bot)
 
