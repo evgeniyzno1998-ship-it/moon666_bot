@@ -18,21 +18,23 @@ class Settings(BaseSettings):
     jwt_secret: str
 
     # Database
-    # Railway provides DATABASE_URL as postgresql:// — sync URL is auto-derived if not set
     database_url: str
     database_url_sync: Optional[str] = None
 
-    # Channel invite link (used in bot subscription button)
+    # Channel invite link
     channel_invite_link: str = "https://t.me/+your_invite_link"
 
     # Anti-fraud
-    max_daily_referrals: int = 10  # max new referrals per referrer per day
+    max_daily_referrals: int = 10
+    min_referred_user_id: Optional[int] = None
+    suspicious_hourly_threshold: int = 8
 
     # Bonus amounts
     bonus_join: Decimal = Decimal("0.20")
     bonus_reaction: Decimal = Decimal("0.01")
     bonus_retention: Decimal = Decimal("0.05")
     min_withdrawal: Decimal = Decimal("10.00")
+    auto_approve_below: Decimal = Decimal("0.00")
 
     @model_validator(mode="after")
     def derive_sync_url(self) -> "Settings":

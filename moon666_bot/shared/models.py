@@ -17,6 +17,7 @@ class TransactionType(str, enum.Enum):
     referral_join = "referral_join"
     referral_reaction = "referral_reaction"
     referral_retention = "referral_retention"
+    manual_adjustment = "manual_adjustment"
 
 
 class WithdrawalStatus(str, enum.Enum):
@@ -25,22 +26,37 @@ class WithdrawalStatus(str, enum.Enum):
     rejected = "rejected"
 
 
+class CampaignBonusType(str, enum.Enum):
+    join = "join"
+    reaction = "reaction"
+    all = "all"
+
+
+class AchievementType(str, enum.Enum):
+    first_referral = "first_referral"
+    referrals_10 = "referrals_10"
+    referrals_25 = "referrals_25"
+    referrals_100 = "referrals_100"
+
+
 class User(Base):
     __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)  # Telegram user_id
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     username: Mapped[Optional[str]] = mapped_column(String(64))
     full_name: Mapped[str] = mapped_column(String(256))
     referred_by: Mapped[Optional[int]] = mapped_column(BigInteger, ForeignKey("users.id"))
     balance_usdt: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=Decimal("0.00"), server_default="0")
     joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
     channel_joined_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    is_banned: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
 
     referrals_made: Mapped[List["Referral"]] = relationship(
         "Referral", foreign_keys="Referral.referrer_id", back_populates="referrer"
     )
     transactions: Mapped[List["Transaction"]] = relationship("Transaction", back_populates="user")
     withdrawals: Mapped[List["Withdrawal"]] = relationship("Withdrawal", back_populates="user")
+    achievements: Mapped[List["UserAchievement"]] = relationship("UserAchievement", back_populates="user")
 
 
 class Referral(Base):
@@ -95,3 +111,27 @@ class ChannelReaction(Base):
     user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"))
     post_id: Mapped[int] = mapped_column(BigInteger)
     reacted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
+
+
+class Campaign(Base):
+    __tablename__ = "campaigns"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(128))
+    bonus_multiplier: Mapped[Decimal] = mapped_column(Numeric(5, 2), default=Decimal("1.00"), server_default="1.00")
+    applies_to: Mapped[CampaignBonusType] = mapped_column(SAEnum(CampaignBonusType))
+    starts_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    ends_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
+
+
+class UserAchievement(Base):
+    __tablename__ = "user_achievements"
+    __table_args__ = (UniqueConstraint("user_id", "achievement_type", name="uq_user_achievement"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"))
+    achievement_type: Mapped[AchievementType] = mapped_column(SAEnum(AchievementType))
+    achieved_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
+
+    user: Mapped["User"] = relationship("User", back_populates="achievements")
