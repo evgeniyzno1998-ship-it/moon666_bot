@@ -68,6 +68,35 @@ async def _record_referral(
     session.add(ref)
     await session.commit()
 
+    # Anti-fraud: suspicious activity alert (fires once when hourly count hits threshold)
+    if bot and settings.suspicious_hourly_threshold > 0:
+        one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
+        hourly_res = await session.execute(
+            select(func.count()).select_from(Referral).where(
+                Referral.referrer_id == referrer_id,
+                Referral.created_at >= one_hour_ago,
+            )
+        )
+        hourly_count = hourly_res.scalar() or 0
+        if hourly_count == settings.suspicious_hourly_threshold:
+            from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+            kb = InlineKeyboardMarkup(inline_keyboard=[[
+                InlineKeyboardButton(text="🚫 Ban user", callback_data=f"ban_user:{referrer_id}"),
+                InlineKeyboardButton(text="✅ Ignore",   callback_data=f"ignore_alert:{referrer_id}"),
+            ]])
+            try:
+                await bot.send_message(
+                    settings.admin_tg_id,
+                    f"⚠️ <b>Suspicious activity!</b>\n\n"
+                    f"User <code>{referrer_id}</code> attracted "
+                    f"<b>{hourly_count} referrals</b> in the last hour.\n\n"
+                    f"Threshold: {settings.suspicious_hourly_threshold}",
+                    reply_markup=kb,
+                    parse_mode="HTML",
+                )
+            except Exception:
+                pass
+
 
 @router.message(CommandStart())
 async def cmd_start(message: Message, command: CommandObject, session: AsyncSession) -> None:
