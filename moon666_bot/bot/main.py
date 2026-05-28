@@ -12,6 +12,7 @@ from bot.handlers.cabinet import router as cabinet_router
 from bot.handlers.withdrawal import router as withdrawal_router
 from bot.handlers.reactions import router as reactions_router
 from bot.handlers.channel_member import router as channel_member_router
+from bot.handlers.admin_callbacks import router as admin_callbacks_router
 from bot.services.scheduler import start_scheduler
 from bot.middlewares.db import DbSessionMiddleware
 
@@ -74,6 +75,7 @@ async def main():
     dp.include_router(cabinet_router)
     dp.include_router(withdrawal_router)
     dp.include_router(reactions_router)
+    dp.include_router(admin_callbacks_router)
 
     dp.startup.register(on_startup)
 
