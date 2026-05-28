@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="pg-head">
+    <a href="/campaigns" style="color:var(--text-3);text-decoration:none;font-size:13px;margin-right:8px">← Кампании</a>
+    <div class="pg-ico">🎯</div>
+    <div class="pg-title">{% if campaign %}Редактировать кампанию{% else %}Новая кампания{% endif %}</div>
+</div>
+
+<div class="card" style="max-width:520px">
+    <form method="post"
+          action="{% if campaign %}/campaigns/{{ campaign.id }}{% else %}/campaigns{% endif %}">
+
+        <div style="margin-bottom:16px">
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px">
+                Название
+            </label>
+            <input type="text" name="name" required style="width:100%"
+                   value="{{ campaign.name if campaign else '' }}"
+                   placeholder="Weekend 2x">
+        </div>
+
+        <div style="margin-bottom:16px">
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px">
+                Множитель бонуса
+            </label>
+            <input type="number" name="bonus_multiplier" step="0.1" min="1" max="10" required style="width:100%"
+                   value="{{ campaign.bonus_multiplier if campaign else '2.0' }}"
+                   placeholder="2.0">
+            <div style="font-size:11px;color:var(--text-3);margin-top:4px">
+                2.0 = двойной бонус, 1.5 = +50%, и т.д.
+            </div>
+        </div>
+
+        <div style="margin-bottom:16px">
+            <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px">
+                Применяется к
+            </label>
+            <select name="applies_to" style="width:100%;background:var(--bg);border:1px solid var(--border);
+                    color:var(--text);padding:8px 13px;border-radius:var(--r-sm);font-size:13px;font-family:inherit">
+                {% for bt in bonus_types %}
+                <option value="{{ bt.value }}"
+                    {% if campaign and campaign.applies_to == bt %}selected{% endif %}>
+                    {{ bt.value }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+            <div>
+                <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px">
+                    Дата начала (UTC)
+                </label>
+                <input type="datetime-local" name="starts_at" required style="width:100%"
+                       value="{{ campaign.starts_at.strftime('%Y-%m-%dT%H:%M') if campaign else '' }}">
+            </div>
+            <div>
+                <label style="display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px">
+                    Дата конца (UTC)
+                </label>
+                <input type="datetime-local" name="ends_at" required style="width:100%"
+                       value="{{ campaign.ends_at.strftime('%Y-%m-%dT%H:%M') if campaign else '' }}">
+            </div>
+        </div>
+
+        <div style="display:flex;gap:10px">
+            <button type="submit" class="btn btn-primary">
+                {% if campaign %}Сохранить{% else %}Создать{% endif %}
+            </button>
+            <a href="/campaigns" class="btn btn-ghost" style="text-decoration:none">Отмена</a>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

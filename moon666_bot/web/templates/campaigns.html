@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="pg-head">
+    <div class="pg-ico">🎯</div>
+    <div class="pg-title">Кампании</div>
+    <a href="/campaigns/new" class="btn btn-primary" style="margin-left:auto;text-decoration:none">
+        + Новая кампания
+    </a>
+</div>
+
+<div class="card" style="padding:0;overflow:hidden">
+    {% if campaigns %}
+    <table>
+        <thead>
+            <tr>
+                <th>Название</th>
+                <th>Множитель</th>
+                <th>Применяется к</th>
+                <th>Старт</th>
+                <th>Конец</th>
+                <th>Статус</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for c in campaigns %}
+        <tr>
+            <td style="font-weight:600">{{ c.name }}</td>
+            <td style="color:var(--gold);font-weight:700">×{{ c.bonus_multiplier }}</td>
+            <td style="color:var(--text-2);font-size:12px">{{ c.applies_to.value }}</td>
+            <td style="color:var(--text-2);font-size:12px">{{ c.starts_at.strftime('%d.%m.%Y %H:%M') }}</td>
+            <td style="color:var(--text-2);font-size:12px">{{ c.ends_at.strftime('%d.%m.%Y %H:%M') }}</td>
+            <td>
+                {% if now >= c.starts_at and now <= c.ends_at %}
+                <span class="badge badge-approved">● Active</span>
+                {% elif now < c.starts_at %}
+                <span class="badge badge-pending">⏳ Upcoming</span>
+                {% else %}
+                <span class="badge" style="background:rgba(255,255,255,.03);color:var(--text-3)">Expired</span>
+                {% endif %}
+            </td>
+            <td style="text-align:right">
+                <a href="/campaigns/{{ c.id }}/edit" class="btn btn-ghost" style="text-decoration:none;font-size:11px">Edit</a>
+                <form method="post" action="/campaigns/{{ c.id }}/delete" style="display:inline"
+                      onsubmit="return confirm('Delete campaign {{ c.name }}?')">
+                    <button type="submit" class="btn btn-red" style="font-size:11px">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty" style="padding:64px 24px">
+        <div class="empty-ico">🎯</div>
+        <div class="empty-txt">Нет кампаний. Создайте первую!</div>
+    </div>
+    {% endif %}
+</div>
+
+{% endblock %}

@@ -9,6 +9,7 @@ def main_menu_kb() -> InlineKeyboardMarkup:
         [InlineKeyboardButton(text="🔗 My Link",       callback_data="my_link")],
         [InlineKeyboardButton(text="📤 Withdraw",      callback_data="withdrawal")],
         [InlineKeyboardButton(text="🏆 Top Referrers", callback_data="top_referrals")],
+        [InlineKeyboardButton(text="🎴 My Card",       callback_data="my_card")],
     ])
 
 

@@ -3,6 +3,7 @@ from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+from datetime import datetime, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -87,6 +88,21 @@ async def process_wallet_address(message: Message, state: FSMContext, session: A
     )
     session.add(withdrawal)
     await session.commit()
+
+    # Auto-approve if amount is below the configured threshold
+    if settings.auto_approve_below > 0 and withdrawal.amount_usdt <= settings.auto_approve_below:
+        withdrawal.status = WithdrawalStatus.approved
+        withdrawal.processed_at = datetime.now(timezone.utc)
+        user.balance_usdt -= withdrawal.amount_usdt
+        await session.commit()
+        await state.clear()
+        await message.answer(
+            f"✅ Withdrawal of <b>{withdrawal.amount_usdt:.2f} USDT</b> was auto-approved!\n\n"
+            f"Funds sent to: <code>{wallet}</code>",
+            reply_markup=main_menu_kb(),
+            parse_mode="HTML",
+        )
+        return
 
     await state.clear()
 

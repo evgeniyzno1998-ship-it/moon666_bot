@@ -5,7 +5,7 @@ from pathlib import Path
 
 from shared.config import settings
 from web.auth import create_access_token, get_current_admin
-from web.routes import dashboard, analytics, withdrawals, users, settings as settings_route
+from web.routes import dashboard, analytics, withdrawals, users, settings as settings_route, campaigns as campaigns_route
 
 BASE_DIR = Path(__file__).parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
@@ -17,6 +17,7 @@ app.include_router(analytics.router)
 app.include_router(withdrawals.router)
 app.include_router(users.router)
 app.include_router(settings_route.router)
+app.include_router(campaigns_route.router)
 
 
 @app.get("/login", response_class=HTMLResponse)

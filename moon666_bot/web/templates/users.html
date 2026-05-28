@@ -4,17 +4,16 @@
 <div class="pg-head">
     <div class="pg-ico">👥</div>
     <div class="pg-title">Пользователи</div>
+    <a href="/users/export.csv" class="btn btn-ghost" style="margin-left:auto;text-decoration:none">
+        ⬇ Export CSV
+    </a>
 </div>
 
-<!-- Search bar -->
 <form method="get" style="display:flex;gap:8px;margin-bottom:16px;align-items:center">
     <div style="position:relative;flex:1;max-width:340px">
-        <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);
-                     font-size:14px;pointer-events:none">🔍</span>
-        <input type="text" name="search"
-               placeholder="Поиск по username или имени…"
-               value="{{ search }}"
-               style="width:100%;padding-left:36px">
+        <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;pointer-events:none">🔍</span>
+        <input type="text" name="search" placeholder="Поиск по username или имени…"
+               value="{{ search }}" style="width:100%;padding-left:36px">
     </div>
     <button type="submit" class="btn btn-primary">Найти</button>
     {% if search %}
@@ -32,24 +31,19 @@
                 <th>Рефералов</th>
                 <th>Дата вступления</th>
                 <th>Подписан</th>
+                <th>Статус</th>
             </tr>
         </thead>
         <tbody>
         {% for u, ref_count in users %}
-        <tr>
+        <tr style="cursor:pointer" onclick="window.location='/users/{{ u.id }}'">
             <td>
                 <div style="font-weight:600">@{{ u.username or '—' }}</div>
                 {% if u.full_name and u.full_name.lower() not in ['null', 'none', ''] and u.full_name != u.username %}
-                <div style="font-size:11px;color:var(--text-3);margin-top:2px">
-                    {{ u.full_name }}
-                </div>
+                <div style="font-size:11px;color:var(--text-3);margin-top:2px">{{ u.full_name }}</div>
                 {% endif %}
             </td>
-            <td>
-                <span style="color:var(--gold);font-weight:700">
-                    ${{ "%.2f"|format(u.balance_usdt) }}
-                </span>
-            </td>
+            <td><span style="color:var(--gold);font-weight:700">${{ "%.2f"|format(u.balance_usdt) }}</span></td>
             <td>
                 {% if ref_count > 0 %}
                 <span style="color:var(--green);font-weight:600">{{ ref_count }}</span>
@@ -62,19 +56,16 @@
             </td>
             <td>
                 {% if u.channel_joined_at %}
-                <span style="display:inline-flex;align-items:center;gap:5px;
-                             color:var(--green);font-size:12px;
-                             background:var(--green-dim);padding:3px 9px;
-                             border-radius:20px;font-weight:600">
-                    ● Да
-                </span>
+                <span class="badge" style="background:var(--green-dim);color:var(--green)">● Да</span>
                 {% else %}
-                <span style="display:inline-flex;align-items:center;gap:5px;
-                             color:var(--text-3);font-size:12px;
-                             background:rgba(255,255,255,.03);padding:3px 9px;
-                             border-radius:20px">
-                    ○ Нет
-                </span>
+                <span class="badge" style="background:rgba(255,255,255,.03);color:var(--text-3)">○ Нет</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if u.is_banned %}
+                <span class="badge" style="background:var(--red-dim);color:var(--red)">🚫 Banned</span>
+                {% else %}
+                <span style="color:var(--text-3);font-size:12px">Active</span>
                 {% endif %}
             </td>
         </tr>
@@ -84,9 +75,7 @@
     {% else %}
     <div class="empty" style="padding:64px 24px">
         <div class="empty-ico">👤</div>
-        <div class="empty-txt">
-            {% if search %}Пользователи не найдены{% else %}Нет пользователей{% endif %}
-        </div>
+        <div class="empty-txt">{% if search %}Пользователи не найдены{% else %}Нет пользователей{% endif %}</div>
     </div>
     {% endif %}
 </div>

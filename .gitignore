@@ -1,0 +1,10 @@
+.worktrees/
+*.pyc
+__pycache__/
+.env
+.env.*
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.worktrees
