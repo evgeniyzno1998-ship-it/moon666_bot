@@ -1,5 +1,4 @@
 from decimal import Decimal
-from datetime import datetime, timezone
 import csv
 import io
 
@@ -116,12 +115,17 @@ async def user_detail_page(
     )
     withdrawals = wds_result.scalars().all()
 
-    total_earned = sum(
-        t.amount_usdt for t in transactions
-        if t.type in (TransactionType.referral_join,
-                      TransactionType.referral_reaction,
-                      TransactionType.referral_retention)
+    earned_res = await session.execute(
+        select(func.sum(Transaction.amount_usdt)).where(
+            Transaction.user_id == user_id,
+            Transaction.type.in_([
+                TransactionType.referral_join,
+                TransactionType.referral_reaction,
+                TransactionType.referral_retention,
+            ])
+        )
     )
+    total_earned = earned_res.scalar() or Decimal("0.00")
 
     return templates.TemplateResponse("user_detail.html", {
         "request": request,
@@ -169,7 +173,11 @@ async def adjust_balance(
 ):
     user = await session.get(User, user_id)
     if user:
-        user.balance_usdt += amount
+        new_balance = user.balance_usdt + amount
+        if new_balance < Decimal("0.00"):
+            # Refuse adjustment that would make balance negative
+            return RedirectResponse(url=f"/users/{user_id}?error=negative_balance", status_code=302)
+        user.balance_usdt = new_balance
         session.add(Transaction(
             user_id=user_id,
             amount_usdt=amount,

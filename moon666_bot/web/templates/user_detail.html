@@ -126,7 +126,7 @@
         <tr>
             <td style="color:var(--text-2);font-size:12px">{{ w.created_at.strftime('%d.%m.%Y') }}</td>
             <td style="color:var(--gold);font-weight:600">${{ "%.2f"|format(w.amount_usdt) }}</td>
-            <td style="font-size:11px;color:var(--text-2)">{{ w.wallet_address[:20] }}…</td>
+            <td style="font-size:11px;color:var(--text-2)">{{ w.wallet_address|truncate(22, true) }}</td>
             <td>
                 <span class="badge badge-{{ w.status.value }}">{{ w.status.value }}</span>
             </td>
