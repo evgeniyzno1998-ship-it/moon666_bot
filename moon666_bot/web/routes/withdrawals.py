@@ -1,6 +1,8 @@
+import csv
+import io
 from datetime import datetime, timezone
 from fastapi import APIRouter, Request, Depends
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,6 +15,38 @@ from web.notifications import send_telegram_notification
 
 router = APIRouter()
 templates = Jinja2Templates(directory=str(Path(__file__).parent.parent / "templates"))
+
+
+@router.get("/withdrawals/export.csv")
+async def export_withdrawals_csv(
+    session: AsyncSession = Depends(get_session),
+    _: bool = Depends(get_current_admin),
+):
+    result = await session.execute(
+        select(Withdrawal, User)
+        .join(User, User.id == Withdrawal.user_id)
+        .order_by(Withdrawal.created_at.desc())
+    )
+    rows = result.all()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["id", "user_id", "username", "amount_usdt", "wallet_address",
+                     "status", "created_at", "processed_at"])
+    for w, user in rows:
+        writer.writerow([
+            w.id, w.user_id, user.username or "",
+            str(w.amount_usdt), w.wallet_address,
+            w.status.value,
+            w.created_at.isoformat() if w.created_at else "",
+            w.processed_at.isoformat() if w.processed_at else "",
+        ])
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=withdrawals.csv"},
+    )
 
 
 @router.get("/withdrawals", response_class=HTMLResponse)

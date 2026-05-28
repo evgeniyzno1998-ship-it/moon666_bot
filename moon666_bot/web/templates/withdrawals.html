@@ -1,9 +1,12 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="pg-head">
+<div class="pg-head" style="display:flex;align-items:center;gap:13px">
     <div class="pg-ico">📤</div>
     <div class="pg-title">Выводы</div>
+    <a href="/withdrawals/export.csv" class="btn btn-ghost" style="margin-left:auto;text-decoration:none">
+        ⬇ Export CSV
+    </a>
 </div>
 
 <div class="card" style="padding:0;overflow:hidden">
