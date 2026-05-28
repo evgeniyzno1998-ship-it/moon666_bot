@@ -26,7 +26,7 @@ async def _credit(
     )
 
 
-async def award_join_bonus(session: AsyncSession, referral: Referral) -> None:
+async def award_join_bonus(session: AsyncSession, referral: Referral, bot=None) -> None:
     if referral.join_bonus_paid:
         return
     await _credit(session, referral, settings.bonus_join, TransactionType.referral_join)

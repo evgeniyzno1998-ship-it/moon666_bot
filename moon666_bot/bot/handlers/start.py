@@ -1,13 +1,11 @@
 from aiogram import Router, Bot
-from aiogram.filters import CommandStart
-from aiogram.types import Message, CallbackQuery
-from aiogram.filters import CommandObject
+from aiogram.filters import CommandStart, CommandObject
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timezone, timedelta
 
 from shared.models import User, Referral
-from shared.database import get_session
 from shared.config import settings
 from bot.keyboards import main_menu_kb, check_subscription_kb
 from bot.services.referral import award_join_bonus
@@ -79,7 +77,6 @@ async def _record_referral(
         )
         hourly_count = hourly_res.scalar() or 0
         if hourly_count == settings.suspicious_hourly_threshold:
-            from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
             kb = InlineKeyboardMarkup(inline_keyboard=[[
                 InlineKeyboardButton(text="🚫 Ban user", callback_data=f"ban_user:{referrer_id}"),
                 InlineKeyboardButton(text="✅ Ignore",   callback_data=f"ignore_alert:{referrer_id}"),
@@ -148,7 +145,8 @@ async def _on_subscription_confirmed(
     message: Message, session: AsyncSession, user: User, bot: Bot
 ) -> None:
     """Called when subscription to the channel is confirmed."""
-    if not user.channel_joined_at:
+    is_first_join = not user.channel_joined_at
+    if is_first_join:
         user.channel_joined_at = datetime.now(timezone.utc)
         await session.commit()
 
@@ -177,9 +175,10 @@ async def _on_subscription_confirmed(
         parse_mode="HTML",
     )
 
-    schedule_onboarding(
-        bot, user.id,
-        settings.bonus_join,
-        settings.bonus_reaction,
-        settings.bonus_retention,
-    )
+    if is_first_join:
+        schedule_onboarding(
+            bot, user.id,
+            settings.bonus_join,
+            settings.bonus_reaction,
+            settings.bonus_retention,
+        )
