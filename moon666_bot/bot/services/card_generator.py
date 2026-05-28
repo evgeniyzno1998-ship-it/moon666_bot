@@ -29,7 +29,7 @@ def _font(size: int) -> ImageFont.FreeTypeFont:
         return ImageFont.load_default()
 
 
-def generate_card(username: str, ref_count: int, earned: float) -> bytes:
+def generate_card(username: str, ref_count: int, earned: float, ref_link: str = "") -> bytes:
     """Generate a 800×400 PNG referral card and return as bytes."""
     W, H = 800, 400
 
@@ -77,9 +77,11 @@ def generate_card(username: str, ref_count: int, earned: float) -> bytes:
     draw.text((650, 315), "EARNED", fill=_SUBTLE, font=_font(14), anchor="mm")
 
     # Footer
-    draw.line([(6, H - 52), (W - 7, H - 52)], fill=_BORDER, width=1)
-    draw.text((W // 2, H - 28), "Earn USDT by inviting friends  ·  @moon666_bot",
-              fill=_SUBTLE, font=_font(14), anchor="mm")
+    draw.line([(6, H - 68), (W - 7, H - 68)], fill=_BORDER, width=1)
+    if ref_link:
+        draw.text((W // 2, H - 46), ref_link, fill=_GOLD, font=_font(14), anchor="mm")
+    draw.text((W // 2, H - 20), "Earn USDT by inviting friends  ·  Moon666",
+              fill=_SUBTLE, font=_font(13), anchor="mm")
 
     buf = io.BytesIO()
     img.save(buf, format="PNG", optimize=True)

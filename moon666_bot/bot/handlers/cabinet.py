@@ -181,8 +181,11 @@ async def cb_my_card(callback: CallbackQuery, session: AsyncSession) -> None:
 
     username = user.username or user.full_name or str(user.id)
 
+    bot_info = await callback.bot.get_me()
+    ref_link = f"t.me/{bot_info.username}?start={user.id}"
+
     try:
-        img_bytes = generate_card(username, ref_count, earned)
+        img_bytes = generate_card(username, ref_count, earned, ref_link=ref_link)
         await callback.message.answer_photo(
             BufferedInputFile(img_bytes, filename="moon666_card.png"),
             caption=(
