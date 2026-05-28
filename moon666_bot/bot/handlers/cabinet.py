@@ -1,14 +1,22 @@
 from aiogram import Router
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, BufferedInputFile
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from decimal import Decimal
 
-from shared.models import User, Referral, Transaction, TransactionType
+from shared.models import User, Referral, Transaction, TransactionType, UserAchievement, AchievementType
 from shared.config import settings
 from bot.keyboards import main_menu_kb
+from bot.services.card_generator import generate_card
 
 router = Router()
+
+_ACH_EMOJI = {
+    AchievementType.first_referral: "🌱",
+    AchievementType.referrals_10:   "🔥",
+    AchievementType.referrals_25:   "⚡",
+    AchievementType.referrals_100:  "💎",
+}
 
 
 def _progress_bar(balance: Decimal, target: Decimal, width: int = 10) -> str:
@@ -42,6 +50,13 @@ async def cb_cabinet(callback: CallbackQuery, session: AsyncSession) -> None:
     )
     total_earned = earned_result.scalar() or Decimal("0.00")
 
+    ach_res = await session.execute(
+        select(UserAchievement).where(UserAchievement.user_id == user.id)
+        .order_by(UserAchievement.achieved_at)
+    )
+    achievements = ach_res.scalars().all()
+    ach_line = " ".join(_ACH_EMOJI.get(a.achievement_type, "🏅") for a in achievements) if achievements else "—"
+
     balance = user.balance_usdt
     target = settings.min_withdrawal
     progress = _progress_bar(balance, target)
@@ -57,7 +72,8 @@ async def cb_cabinet(callback: CallbackQuery, session: AsyncSession) -> None:
         f"│  {progress}\n"
         f"│  Until withdrawal: {remaining:.2f} USDT\n"
         f"└─────────────────────────┘\n\n"
-        f"👥 {ref_count} referrals · 💰 earned {total_earned:.2f} USDT\n\n"
+        f"👥 {ref_count} referrals · 💰 earned {total_earned:.2f} USDT\n"
+        f"🏆 Achievements: {ach_line}\n\n"
         f"🔗 <code>{ref_link}</code>"
     )
     await callback.message.edit_text(text, reply_markup=main_menu_kb(), parse_mode="HTML")
@@ -136,4 +152,46 @@ async def cb_top_referrals(callback: CallbackQuery, session: AsyncSession) -> No
     await callback.message.edit_text(
         "\n".join(lines), reply_markup=main_menu_kb(), parse_mode="HTML"
     )
+    await callback.answer()
+
+
+@router.callback_query(lambda c: c.data == "my_card")
+async def cb_my_card(callback: CallbackQuery, session: AsyncSession) -> None:
+    user = await session.get(User, callback.from_user.id)
+    if not user:
+        await callback.answer("Please send /start first")
+        return
+
+    ref_count_res = await session.execute(
+        select(func.count()).where(Referral.referrer_id == user.id)
+    )
+    ref_count = ref_count_res.scalar() or 0
+
+    earned_res = await session.execute(
+        select(func.sum(Transaction.amount_usdt)).where(
+            Transaction.user_id == user.id,
+            Transaction.type.in_([
+                TransactionType.referral_join,
+                TransactionType.referral_reaction,
+                TransactionType.referral_retention,
+            ])
+        )
+    )
+    earned = float(earned_res.scalar() or 0)
+
+    username = user.username or user.full_name or str(user.id)
+
+    try:
+        img_bytes = generate_card(username, ref_count, earned)
+        await callback.message.answer_photo(
+            BufferedInputFile(img_bytes, filename="moon666_card.png"),
+            caption=(
+                f"🎴 <b>Your Referral Card</b>\n\n"
+                f"Share this to invite friends and earn USDT!"
+            ),
+            parse_mode="HTML",
+        )
+    except Exception as e:
+        await callback.message.answer(f"⚠️ Could not generate card: {e}")
+
     await callback.answer()
