@@ -185,12 +185,13 @@ async def cb_my_card(callback: CallbackQuery, session: AsyncSession) -> None:
     ref_link = f"t.me/{bot_info.username}?start={user.id}"
 
     try:
-        img_bytes = generate_card(username, ref_count, earned, ref_link=ref_link)
+        img_bytes = generate_card(username, ref_count, earned)
         await callback.message.answer_photo(
             BufferedInputFile(img_bytes, filename="moon666_card.png"),
             caption=(
                 f"🎴 <b>Your Referral Card</b>\n\n"
-                f"Share this to invite friends and earn USDT!"
+                f"Share this link with friends to earn USDT!\n\n"
+                f"🔗 <code>https://t.me/{bot_info.username}?start={user.id}</code>"
             ),
             parse_mode="HTML",
         )
