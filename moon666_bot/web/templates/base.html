@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+    <script>
+        (function(){var t=localStorage.getItem('theme');if(t==='light'||(t==null&&window.matchMedia('(prefers-color-scheme: light)').matches)){document.documentElement.classList.add('light');}})();
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🌙 Moon666 Admin</title>
@@ -300,6 +303,50 @@
         .right { margin-left: auto; }
         .row { display: flex; align-items: center; }
 
+        /* ─── LIGHT THEME ────────────────────────── */
+        html.light {
+            --bg:           #f4f5f7;
+            --bg-2:         #edf0f4;
+            --bg-card:      #ffffff;
+            --bg-hover:     #f0f2f5;
+            --bg-inset:     rgba(0,0,0,.04);
+            --border:       #e2e5ec;
+            --border-light: #d0d5de;
+            --sidebar-bg:   #ffffff;
+
+            --gold-dim:     rgba(240,185,11,.12);
+            --gold-glow:    rgba(240,185,11,.25);
+            --green-dim:    rgba(14,203,129,.12);
+            --blue-dim:     rgba(33,150,243,.12);
+            --purple-dim:   rgba(167,139,250,.12);
+            --red-dim:      rgba(246,70,93,.12);
+
+            --text:         #1a1d24;
+            --text-2:       #5a6275;
+            --text-3:       #9ba3b2;
+            --shadow:       0 8px 28px rgba(0,0,0,.10);
+        }
+        html.light body { background: var(--bg); }
+        html.light .sidebar { box-shadow: 2px 0 12px rgba(0,0,0,.07); }
+        html.light input[type="text"], html.light input[type="password"],
+        html.light input[type="date"], html.light input[type="datetime-local"],
+        html.light input[type="number"], html.light select {
+            background: var(--bg-card);
+        }
+
+        /* theme toggle button */
+        .theme-btn {
+            display: flex; align-items: center; gap: 9px;
+            width: 100%; padding: 8px 11px;
+            background: var(--bg-inset); border: 1px solid var(--border);
+            border-radius: var(--r-sm); cursor: pointer; color: var(--text-2);
+            font-size: 12.5px; font-weight: 500; font-family: inherit;
+            transition: all .15s; margin-bottom: 8px;
+        }
+        .theme-btn:hover { background: var(--bg-hover); color: var(--text); }
+        .theme-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+        .theme-btn .theme-label { flex: 1; text-align: left; }
+
         /* ─── SCROLLBAR ───────────────────────────── */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -401,6 +448,12 @@
                 <div class="muted" style="font-size:11px">Администратор</div>
             </div>
         </div>
+        <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">
+            <svg id="themeIcon" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/>
+            </svg>
+            <span class="theme-label" id="themeLabel">Светлая тема</span>
+        </button>
         <a href="/logout"><span class="nav-ico"><svg class="ic"><use href="#i-logout"/></svg></span> Выйти</a>
     </div>
 </div>
@@ -415,6 +468,7 @@
 </div>
 
 <script>
+/* ── sidebar toggle ── */
 function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
 document.addEventListener('click', function(e) {
     var sidebar = document.getElementById('sidebar');
@@ -423,6 +477,29 @@ document.addEventListener('click', function(e) {
         sidebar.classList.remove('open');
     }
 });
+
+/* ── light / dark theme ── */
+var SUN_SVG  = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2 12h2M20 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/>';
+var MOON_SVG = '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9z"/>';
+
+function applyTheme(light) {
+    document.documentElement.classList.toggle('light', light);
+    var icon  = document.getElementById('themeIcon');
+    var label = document.getElementById('themeLabel');
+    if (!icon) return;
+    icon.innerHTML  = light ? SUN_SVG : MOON_SVG;
+    label.textContent = light ? 'Тёмная тема' : 'Светлая тема';
+}
+function toggleTheme() {
+    var isLight = !document.documentElement.classList.contains('light');
+    localStorage.setItem('theme', isLight ? 'light' : 'dark');
+    applyTheme(isLight);
+}
+(function() {
+    var saved = localStorage.getItem('theme');
+    var preferLight = saved ? saved === 'light' : window.matchMedia('(prefers-color-scheme: light)').matches;
+    applyTheme(preferLight);
+})();
 </script>
 </body>
 </html>
