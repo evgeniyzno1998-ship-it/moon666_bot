@@ -1,12 +1,20 @@
 {% extends "base.html" %}
 {% block content %}
 
+{% set typenames = {'referral_join':'За вступление','referral_reaction':'За реакцию','referral_retention':'За удержание','manual_adjustment':'Ручная корректировка'} %}
+{% set typecolors = {'referral_join':'var(--green)','referral_reaction':'var(--blue)','referral_retention':'var(--purple)','manual_adjustment':'var(--text-3)'} %}
+
 <div class="pg-head">
-    <div class="pg-ico">📈</div>
-    <div class="pg-title">Аналитика</div>
+    <div class="pg-ico"><svg class="ic"><use href="#i-analytics"/></svg></div>
+    <div>
+        <div class="pg-title">Аналитика</div>
+        <div class="pg-sub">Воронка удержания и расходы</div>
+    </div>
 </div>
 
 <div class="period-bar">
+    <span class="prd-ico"><svg class="ic"><use href="#i-calendar"/></svg></span>
+    <div class="prd-sep"></div>
     <a href="/analytics?period=7d"  class="prd-btn {% if period == '7d'  %}active{% endif %}">7 дней</a>
     <a href="/analytics?period=30d" class="prd-btn {% if period == '30d' %}active{% endif %}">30 дней</a>
     <a href="/analytics?period=90d" class="prd-btn {% if period == '90d' %}active{% endif %}">90 дней</a>
@@ -15,134 +23,110 @@
         <input type="hidden" name="period" value="custom">
         <input type="date" name="date_from" value="{{ date_from or '' }}" style="font-size:12px;padding:6px 10px">
         <input type="date" name="date_to"   value="{{ date_to or '' }}"   style="font-size:12px;padding:6px 10px">
-        <button type="submit" class="btn btn-primary" style="padding:6px 14px">Применить</button>
+        <button type="submit" class="btn btn-primary btn-sm">Применить</button>
     </form>
 </div>
 
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+<div style="display:grid;grid-template-columns:1.25fr 1fr;gap:14px;align-items:start">
 
     <!-- Retention funnel -->
     <div class="card">
         <div class="card-hd">
-            <span>🔻</span>
+            <span class="ico"><svg class="ic"><use href="#i-funnel"/></svg></span>
             <span class="card-ttl">Retention воронка</span>
+            <span class="right row" style="gap:7px">
+                <span class="muted" style="font-size:12px">Зашло за период</span>
+                <span style="font-size:16px;font-weight:700">{{ total_joined }}</span>
+            </span>
         </div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px">
-            <span style="font-size:12px;color:var(--text-3)">Зашло за период:</span>
-            <span style="font-size:18px;font-weight:700;color:var(--text)">{{ total_joined }}</span>
-        </div>
+        {% if retention_funnel %}
+        <div style="display:flex;flex-direction:column;gap:13px">
         {% for r in retention_funnel %}
-        <div style="margin-bottom:14px">
-            <div style="display:flex;justify-content:space-between;margin-bottom:6px;align-items:baseline">
-                <span style="font-size:13px;font-weight:500;color:var(--text-2)">День {{ r.days }}</span>
-                <div style="display:flex;align-items:center;gap:8px">
-                    <span style="font-size:13px;font-weight:700;color:var(--purple)">{{ r.count }}</span>
-                    <span style="font-size:11px;color:var(--text-3);background:var(--purple-dim);
-                                 padding:2px 8px;border-radius:10px">{{ r.pct }}%</span>
-                </div>
-            </div>
-            <div style="background:rgba(255,255,255,.04);border-radius:6px;height:8px;overflow:hidden">
-                <div style="
-                    width:{{ r.pct }}%;
-                    height:100%;
-                    background:linear-gradient(90deg,#7c3aed,#a78bfa);
-                    border-radius:6px;
-                    min-width:{% if r.count > 0 %}4px{% else %}0{% endif %}
-                "></div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-
-    <!-- Expense breakdown -->
-    <div class="card">
-        <div class="card-hd">
-            <span>💸</span>
-            <span class="card-ttl">Расход по типам</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:18px">
-            <span style="font-size:12px;color:var(--text-3)">Стоимость подписчика:</span>
-            <span style="font-size:18px;font-weight:700;color:var(--gold)">${{ cost_per_user }}</span>
-        </div>
-        {% for b in bonus_breakdown %}
-        {% set colors = {'referral_join': '#0ecb81', 'referral_reaction': '#2196f3', 'referral_retention': '#a78bfa'} %}
-        {% set clr = colors.get(b.type, '#848e9c') %}
-        <div style="margin-bottom:14px">
-            <div style="display:flex;justify-content:space-between;margin-bottom:6px;align-items:center">
-                <div style="display:flex;align-items:center;gap:7px">
-                    <div style="width:8px;height:8px;border-radius:50%;background:{{ clr }}"></div>
-                    <span style="font-size:13px;font-weight:500;color:var(--text-2)">
-                        {% if b.type == 'referral_join' %}За вступление
-                        {% elif b.type == 'referral_reaction' %}За реакцию
-                        {% elif b.type == 'referral_retention' %}За удержание
-                        {% else %}{{ b.type }}{% endif %}
+            <div>
+                <div class="row" style="justify-content:space-between;margin-bottom:5px">
+                    <span style="font-size:13px;font-weight:500">Остались {{ r.days }} дней</span>
+                    <span class="row" style="gap:8px">
+                        <span style="color:var(--purple);font-weight:700" class="tnum">{{ r.count }}</span>
+                        <span class="muted tnum" style="font-size:12px;width:38px;text-align:right">{{ r.pct }}%</span>
                     </span>
                 </div>
-                <div style="display:flex;align-items:center;gap:8px">
-                    <span style="font-size:13px;font-weight:700;color:{{ clr }}">${{ "%.2f"|format(b.total) }}</span>
-                    <span style="font-size:11px;color:var(--text-3);background:rgba(255,255,255,.05);
-                                 padding:2px 8px;border-radius:10px">{{ b.pct }}%</span>
+                <div class="track-bar" style="height:10px">
+                    <div class="track-fill" style="width:{{ r.pct }}%;background:linear-gradient(90deg,#7c3aed,#a78bfa);min-width:{% if r.count > 0 %}4px{% else %}0{% endif %}"></div>
                 </div>
             </div>
-            <div style="background:rgba(255,255,255,.04);border-radius:6px;height:8px;overflow:hidden">
-                <div style="
-                    width:{{ b.pct }}%;
-                    height:100%;
-                    background:{{ clr }};
-                    border-radius:6px;
-                    min-width:{% if b.total > 0 %}4px{% else %}0{% endif %};
-                    opacity:.8
-                "></div>
+        {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty"><svg class="ic"><use href="#i-funnel"/></svg><div class="empty-txt">Нет данных за период</div></div>
+        {% endif %}
+    </div>
+
+    <!-- Spend breakdown -->
+    <div class="card">
+        <div class="card-hd">
+            <span class="ico"><svg class="ic"><use href="#i-spend"/></svg></span>
+            <span class="card-ttl">Расход по типам</span>
+        </div>
+        {% set ns = namespace(acc=0, grad='') %}
+        {% for b in bonus_breakdown %}
+            {% set start = ns.acc %}
+            {% set end = ns.acc + b.pct %}
+            {% set ns.grad = ns.grad + typecolors.get(b.type, 'var(--text-3)') + ' ' + start|string + '% ' + end|string + '%' + (', ' if not loop.last else '') %}
+            {% set ns.acc = end %}
+        {% endfor %}
+        <div class="row" style="gap:20px;align-items:center">
+            <div style="position:relative;flex-shrink:0;width:140px;height:140px">
+                <div style="width:140px;height:140px;border-radius:50%;background:conic-gradient({{ ns.grad }});mask:radial-gradient(circle 42px at center, transparent 98%, #000 100%);-webkit-mask:radial-gradient(circle 42px at center, transparent 98%, #000 100%)"></div>
+                <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+                    <div class="tnum" style="font-size:19px;font-weight:700">${{ cost_per_user }}</div>
+                    <div class="muted" style="font-size:9.5px;text-align:center;max-width:80px">стоимость подписчика</div>
+                </div>
+            </div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:11px;min-width:0">
+                {% for b in bonus_breakdown %}
+                <div class="row" style="gap:9px">
+                    <span style="width:9px;height:9px;border-radius:3px;background:{{ typecolors.get(b.type,'var(--text-3)') }};flex-shrink:0"></span>
+                    <span style="font-size:12.5px">{{ typenames.get(b.type, b.type) }}</span>
+                    <span class="right tnum" style="font-weight:700">${{ "%.2f"|format(b.total) }}</span>
+                </div>
+                {% endfor %}
             </div>
         </div>
-        {% endfor %}
     </div>
 
 </div>
 
 <!-- Top referrers -->
-<div class="card">
-    <div class="card-hd">
-        <span>🏆</span>
+<div class="card flush">
+    <div class="row" style="padding:20px 20px 14px;gap:9px">
+        <span class="ico t2" style="display:flex"><svg class="ic"><use href="#i-trophy"/></svg></span>
         <span class="card-ttl">Топ рефереров</span>
     </div>
     {% if top_referrers %}
     <table>
-        <thead>
-            <tr>
-                <th style="width:50px">#</th>
-                <th>Пользователь</th>
-                <th>Рефералов</th>
-            </tr>
-        </thead>
+        <thead><tr><th style="width:54px">#</th><th>Пользователь</th><th style="text-align:right">Рефералов</th></tr></thead>
         <tbody>
         {% for username, full_name, cnt in top_referrers %}
         <tr>
+            <td><span class="mono" style="font-weight:700;font-size:13px;color:{% if loop.index <= 3 %}var(--gold){% else %}var(--text-3){% endif %}">{{ loop.index }}</span></td>
             <td>
-                {% if loop.index == 1 %}
-                    <span style="font-size:16px">🥇</span>
-                {% elif loop.index == 2 %}
-                    <span style="font-size:16px">🥈</span>
-                {% elif loop.index == 3 %}
-                    <span style="font-size:16px">🥉</span>
-                {% else %}
-                    <span style="color:var(--text-3);font-size:13px">{{ loop.index }}</span>
-                {% endif %}
+                <div class="ucell">
+                    <div class="av">{{ (username or full_name or '?')[:2]|upper }}</div>
+                    <div style="min-width:0">
+                        <div class="nm">@{{ username or full_name or '—' }}</div>
+                    </div>
+                </div>
             </td>
-            <td style="font-weight:500">@{{ username or full_name }}</td>
-            <td>
-                <span style="color:var(--green);font-weight:700;font-size:15px">{{ cnt }}</span>
-                <span style="color:var(--text-3);font-size:11px;margin-left:4px">реф.</span>
+            <td style="text-align:right">
+                <span class="amt" style="color:var(--green)">{{ cnt }}</span>
+                <span class="muted" style="font-size:11px;margin-left:4px">реф.</span>
             </td>
         </tr>
         {% endfor %}
         </tbody>
     </table>
     {% else %}
-    <div class="empty">
-        <div class="empty-ico">📊</div>
-        <div class="empty-txt">Нет данных за выбранный период</div>
-    </div>
+    <div class="empty"><svg class="ic"><use href="#i-trophy"/></svg><div class="empty-txt">Нет данных за выбранный период</div></div>
     {% endif %}
 </div>
 

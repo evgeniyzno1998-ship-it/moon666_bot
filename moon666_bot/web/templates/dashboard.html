@@ -2,11 +2,16 @@
 {% block content %}
 
 <div class="pg-head">
-    <div class="pg-ico">📊</div>
-    <div class="pg-title">Дашборд</div>
+    <div class="pg-ico"><svg class="ic"><use href="#i-dashboard"/></svg></div>
+    <div>
+        <div class="pg-title">Дашборд</div>
+        <div class="pg-sub">Сводка по реферальной программе</div>
+    </div>
 </div>
 
 <div class="period-bar">
+    <span class="prd-ico"><svg class="ic"><use href="#i-calendar"/></svg></span>
+    <div class="prd-sep"></div>
     <a href="/?period=today" class="prd-btn {% if period == 'today' %}active{% endif %}">Сегодня</a>
     <a href="/?period=7d"    class="prd-btn {% if period == '7d'    %}active{% endif %}">7 дней</a>
     <a href="/?period=30d"   class="prd-btn {% if period == '30d'   %}active{% endif %}">30 дней</a>
@@ -16,131 +21,121 @@
         <input type="hidden" name="period" value="custom">
         <input type="date" name="date_from" value="{{ date_from or '' }}" style="font-size:12px;padding:6px 10px">
         <input type="date" name="date_to"   value="{{ date_to or '' }}"   style="font-size:12px;padding:6px 10px">
-        <button type="submit" class="btn btn-primary" style="padding:6px 14px">Применить</button>
+        <button type="submit" class="btn btn-primary btn-sm">Применить</button>
     </form>
 </div>
 
 <!-- KPI CARDS -->
 <div class="kpi-grid">
     <div class="kpi">
-        <div class="kpi-lbl">Подписчиков</div>
-        <div class="kpi-val" style="color:var(--purple)">{{ total_users }}</div>
-        <div class="kpi-sub">за период</div>
-        <div class="kpi-bg-ico">👥</div>
-        <div style="position:absolute;bottom:0;left:0;right:0;height:3px;
-                    background:linear-gradient(90deg,var(--purple),transparent);border-radius:0 0 var(--r) var(--r);opacity:.5"></div>
+        <div class="kpi-top">
+            <span class="kpi-lbl">Подписчиков</span>
+            <span class="kpi-ico" style="background:var(--purple-dim);color:var(--purple)"><svg class="ic"><use href="#i-users"/></svg></span>
+        </div>
+        <div class="kpi-val">{{ total_users }}</div>
+        <div class="kpi-sub">всего в базе</div>
+        <div class="kpi-bar" style="background:var(--purple)"></div>
     </div>
     <div class="kpi">
-        <div class="kpi-lbl">Начислено</div>
-        <div class="kpi-val" style="color:var(--green)">${{ "%.2f"|format(total_accrued) }}</div>
+        <div class="kpi-top">
+            <span class="kpi-lbl">Начислено</span>
+            <span class="kpi-ico" style="background:var(--green-dim);color:var(--green)"><svg class="ic"><use href="#i-coins"/></svg></span>
+        </div>
+        <div class="kpi-val">${{ "%.2f"|format(total_accrued) }}</div>
         <div class="kpi-sub">USDT реферальных</div>
-        <div class="kpi-bg-ico">💰</div>
-        <div style="position:absolute;bottom:0;left:0;right:0;height:3px;
-                    background:linear-gradient(90deg,var(--green),transparent);border-radius:0 0 var(--r) var(--r);opacity:.5"></div>
+        <div class="kpi-bar" style="background:var(--green)"></div>
     </div>
     <div class="kpi">
-        <div class="kpi-lbl">Выплачено</div>
-        <div class="kpi-val" style="color:var(--blue)">${{ "%.2f"|format(total_paid) }}</div>
+        <div class="kpi-top">
+            <span class="kpi-lbl">Выплачено</span>
+            <span class="kpi-ico" style="background:var(--blue-dim);color:var(--blue)"><svg class="ic"><use href="#i-wallet"/></svg></span>
+        </div>
+        <div class="kpi-val">${{ "%.2f"|format(total_paid) }}</div>
         <div class="kpi-sub">USDT выведено</div>
-        <div class="kpi-bg-ico">✅</div>
-        <div style="position:absolute;bottom:0;left:0;right:0;height:3px;
-                    background:linear-gradient(90deg,var(--blue),transparent);border-radius:0 0 var(--r) var(--r);opacity:.5"></div>
+        <div class="kpi-bar" style="background:var(--blue)"></div>
     </div>
     <div class="kpi">
-        <div class="kpi-lbl">Заявок в очереди</div>
-        <div class="kpi-val" style="color:var(--gold)">{{ pending_count }}</div>
+        <div class="kpi-top">
+            <span class="kpi-lbl">Заявок в очереди</span>
+            <span class="kpi-ico" style="background:var(--gold-dim);color:var(--gold)"><svg class="ic"><use href="#i-clock"/></svg></span>
+        </div>
+        <div class="kpi-val">{{ pending_count }}</div>
         <div class="kpi-sub">ожидают обработки</div>
-        <div class="kpi-bg-ico">⏳</div>
-        <div style="position:absolute;bottom:0;left:0;right:0;height:3px;
-                    background:linear-gradient(90deg,var(--gold),transparent);border-radius:0 0 var(--r) var(--r);opacity:.5"></div>
+        <div class="kpi-bar" style="background:var(--gold)"></div>
     </div>
 </div>
 
 <!-- BOTTOM ROW -->
-<div style="display:grid;grid-template-columns:1fr 1.3fr;gap:14px">
+<div style="display:grid;grid-template-columns:1.5fr 1fr;gap:14px;align-items:start">
 
-    <!-- Recent withdrawals -->
+    <!-- Growth chart -->
     <div class="card">
         <div class="card-hd">
-            <span>⏳</span>
-            <span class="card-ttl">Последние заявки на вывод</span>
+            <span class="ico"><svg class="ic"><use href="#i-analytics"/></svg></span>
+            <span class="card-ttl">Рост подписчиков по неделям</span>
+        </div>
+        {% set n = growth|length %}
+        {% set ns = namespace(max=1, line='', area='') %}
+        {% for g in growth %}{% if g.count > ns.max %}{% set ns.max = g.count %}{% endif %}{% endfor %}
+        {% set W = 720 %}{% set H = 180 %}{% set pad = 10 %}
+        {% for g in growth %}
+            {% if n > 1 %}{% set x = pad + (loop.index0 / (n - 1) * (W - 2*pad)) %}{% else %}{% set x = W/2 %}{% endif %}
+            {% set y = H - pad - (g.count / ns.max) * (H - 2*pad - 12) %}
+            {% set ns.line = ns.line + (x|round(1)|string) + ',' + (y|round(1)|string) + ' ' %}
+        {% endfor %}
+        <svg viewBox="0 0 {{ W }} {{ H }}" preserveAspectRatio="none" style="width:100%;height:190px;display:block;overflow:visible">
+            <defs>
+                <linearGradient id="garea" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="var(--gold)" stop-opacity="0.26"/>
+                    <stop offset="100%" stop-color="var(--gold)" stop-opacity="0"/>
+                </linearGradient>
+            </defs>
+            <line x1="{{ pad }}" x2="{{ W - pad }}" y1="{{ H*0.33 }}" y2="{{ H*0.33 }}" stroke="var(--border)" stroke-width="1"/>
+            <line x1="{{ pad }}" x2="{{ W - pad }}" y1="{{ H*0.66 }}" y2="{{ H*0.66 }}" stroke="var(--border)" stroke-width="1"/>
+            <polygon points="{{ pad }},{{ H - pad }} {{ ns.line }} {{ W - pad }},{{ H - pad }}" fill="url(#garea)"/>
+            <polyline points="{{ ns.line }}" fill="none" stroke="var(--gold)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            {% for g in growth %}
+                {% if n > 1 %}{% set x = pad + (loop.index0 / (n - 1) * (W - 2*pad)) %}{% else %}{% set x = W/2 %}{% endif %}
+                {% set y = H - pad - (g.count / ns.max) * (H - 2*pad - 12) %}
+                <circle cx="{{ x|round(1) }}" cy="{{ y|round(1) }}" r="3" fill="var(--bg-card)" stroke="var(--gold)" stroke-width="2"/>
+            {% endfor %}
+        </svg>
+        <div style="display:flex;justify-content:space-between;margin-top:8px">
+            {% for g in growth %}
+            <span class="muted" style="font-size:10.5px">{{ g.week }}</span>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Recent withdrawals -->
+    <div class="card flush">
+        <div class="row" style="padding:20px 20px 14px;gap:9px">
+            <span class="ico t2" style="display:flex"><svg class="ic"><use href="#i-withdrawals"/></svg></span>
+            <span class="card-ttl">Заявки на вывод</span>
+            <a href="/withdrawals" class="btn btn-ghost btn-sm right">Все <svg class="ic"><use href="#i-arrow"/></svg></a>
         </div>
         {% if recent_withdrawals %}
         <table>
-            <thead>
-                <tr>
-                    <th>Пользователь</th>
-                    <th>Сумма</th>
-                    <th>Дата</th>
-                    <th></th>
-                </tr>
-            </thead>
             <tbody>
             {% for w, u in recent_withdrawals %}
-            <tr>
+            <tr class="clickable" onclick="window.location='/withdrawals'">
                 <td>
-                    <div style="font-weight:500">@{{ u.username or u.full_name or '—' }}</div>
-                    <div style="font-size:11px;color:var(--text-3);margin-top:2px;
-                                font-family:monospace">{{ w.wallet_address[:18] }}…</div>
+                    <div class="ucell">
+                        <div class="av">{{ (u.username or u.full_name or '?')[:2]|upper }}</div>
+                        <div style="min-width:0">
+                            <div class="nm">@{{ u.username or u.full_name or '—' }}</div>
+                            <div class="un mono">{{ w.wallet_address[:10] }}…</div>
+                        </div>
+                    </div>
                 </td>
-                <td>
-                    <span style="color:var(--gold);font-weight:700;font-size:15px">
-                        ${{ "%.2f"|format(w.amount_usdt) }}
-                    </span>
-                </td>
-                <td style="color:var(--text-2);font-size:12px">
-                    {{ w.created_at.strftime('%d.%m %H:%M') }}
-                </td>
-                <td>
-                    <a href="/withdrawals" class="btn btn-ghost"
-                       style="font-size:11px;padding:5px 10px;text-decoration:none">→</a>
-                </td>
+                <td style="text-align:right"><span class="amt">${{ "%.2f"|format(w.amount_usdt) }}</span></td>
             </tr>
             {% endfor %}
             </tbody>
         </table>
         {% else %}
-        <div class="empty">
-            <div class="empty-ico">📭</div>
-            <div class="empty-txt">Нет активных заявок</div>
-        </div>
+        <div class="empty"><svg class="ic"><use href="#i-inbox"/></svg><div class="empty-txt">Нет активных заявок</div></div>
         {% endif %}
-    </div>
-
-    <!-- Growth chart -->
-    <div class="card">
-        <div class="card-hd">
-            <span>📈</span>
-            <span class="card-ttl">Рост подписчиков по неделям</span>
-        </div>
-        {% set ns = namespace(max=1) %}
-        {% for g in growth %}
-            {% if g.count > ns.max %}{% set ns.max = g.count %}{% endif %}
-        {% endfor %}
-        <div style="display:flex;flex-direction:column;gap:9px">
-        {% for g in growth %}
-        <div style="display:flex;align-items:center;gap:10px">
-            <span style="color:var(--text-3);font-size:11px;width:30px;
-                         text-align:right;font-variant-numeric:tabular-nums">{{ g.week }}</span>
-            <div style="flex:1;background:rgba(255,255,255,.03);
-                        border-radius:5px;height:22px;overflow:hidden;position:relative">
-                <div style="
-                    height:100%;
-                    width:{{ (g.count / ns.max * 100)|int if ns.max > 0 else 0 }}%;
-                    min-width:{% if g.count > 0 %}4px{% else %}0{% endif %};
-                    background:linear-gradient(90deg,rgba(240,185,11,.15),rgba(240,185,11,.55));
-                    border-radius:5px;
-                    position:relative;
-                ">{% if g.count > 0 %}<div style="position:absolute;right:0;top:0;bottom:0;
-                    width:2px;background:var(--gold);border-radius:2px;
-                    box-shadow:0 0 8px var(--gold)"></div>{% endif %}
-                </div>
-            </div>
-            <span style="color:var(--gold);font-size:12px;font-weight:600;
-                         width:26px;font-variant-numeric:tabular-nums">{{ g.count }}</span>
-        </div>
-        {% endfor %}
-        </div>
     </div>
 
 </div>

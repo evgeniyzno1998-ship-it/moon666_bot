@@ -1,142 +1,170 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="pg-head">
-    <a href="/users" style="color:var(--text-3);text-decoration:none;font-size:13px;margin-right:8px">← Users</a>
-    <div class="pg-ico">👤</div>
-    <div>
-        <div class="pg-title">@{{ user.username or '—' }}</div>
-        <div style="font-size:12px;color:var(--text-2);margin-top:2px">{{ user.full_name or '' }} · ID: {{ user.id }}</div>
+{% set txnames = {'referral_join':'Реферал (вступление)','referral_reaction':'Реакция','referral_retention':'Удержание','manual_adjustment':'Ручная корректировка'} %}
+{% set txicons = {'referral_join':'i-users','referral_reaction':'i-reaction','referral_retention':'i-clock','manual_adjustment':'i-edit'} %}
+{% set txcolors = {'referral_join':'green','referral_reaction':'blue','referral_retention':'purple','manual_adjustment':'gold'} %}
+
+<a href="/users" class="btn btn-ghost btn-sm" style="margin-bottom:18px">
+    <svg class="ic" style="transform:rotate(180deg)"><use href="#i-arrow"/></svg> Назад
+</a>
+
+{% if request.query_params.get('error') == 'negative_balance' %}
+<div class="alert alert-err"><svg class="ic"><use href="#i-x"/></svg> Корректировка отклонена: баланс не может стать отрицательным.</div>
+{% endif %}
+
+<!-- Header -->
+<div class="card">
+    <div class="row" style="gap:16px;flex-wrap:wrap">
+        <div class="av" style="width:62px;height:62px;font-size:22px;border-radius:16px">{{ (user.username or user.full_name or '?')[:2]|upper }}</div>
+        <div style="min-width:0">
+            <div class="row" style="gap:10px;flex-wrap:wrap">
+                <span style="font-size:20px;font-weight:700;letter-spacing:-.4px">@{{ user.username or '—' }}</span>
+                {% if user.is_banned %}<span class="badge badge-red"><span class="dot"></span>Бан</span>
+                {% else %}<span class="badge badge-green"><span class="dot"></span>Активен</span>{% endif %}
+                {% if user.channel_joined_at %}<span class="badge badge-blue"><svg class="ic" style="width:11px;height:11px"><use href="#i-check"/></svg>Подписан</span>{% endif %}
+            </div>
+            <div class="row" style="gap:14px;margin-top:5px;flex-wrap:wrap">
+                {% if user.full_name %}<span class="t2" style="font-size:12.5px">{{ user.full_name }}</span>{% endif %}
+                <span class="muted" style="font-size:12.5px">ID: {{ user.id }}</span>
+                <span class="muted" style="font-size:12.5px">Вступил: {{ user.joined_at.strftime('%d.%m.%Y') if user.joined_at else '—' }}</span>
+                {% if user.referred_by %}<span class="muted" style="font-size:12.5px">Пригласил: <span class="mono">{{ user.referred_by }}</span></span>{% endif %}
+            </div>
+        </div>
     </div>
-    {% if user.is_banned %}
-    <span class="badge" style="background:var(--red-dim);color:var(--red);margin-left:auto">🚫 Banned</span>
-    {% endif %}
 </div>
 
-<!-- Stats row -->
+<!-- Stats -->
 <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
     <div class="kpi">
-        <div class="kpi-lbl">Balance</div>
-        <div class="kpi-val" style="color:var(--gold)">${{ "%.2f"|format(user.balance_usdt) }}</div>
-        <div class="kpi-bg-ico">💰</div>
+        <div class="kpi-top"><span class="kpi-lbl">Баланс</span>
+            <span class="kpi-ico" style="background:var(--gold-dim);color:var(--gold)"><svg class="ic"><use href="#i-wallet"/></svg></span></div>
+        <div class="kpi-val">${{ "%.2f"|format(user.balance_usdt) }}</div>
+        <div class="kpi-bar" style="background:var(--gold)"></div>
     </div>
     <div class="kpi">
-        <div class="kpi-lbl">Referrals</div>
-        <div class="kpi-val" style="color:var(--green)">{{ referrals|length }}</div>
-        <div class="kpi-bg-ico">👥</div>
+        <div class="kpi-top"><span class="kpi-lbl">Рефералов</span>
+            <span class="kpi-ico" style="background:var(--green-dim);color:var(--green)"><svg class="ic"><use href="#i-users"/></svg></span></div>
+        <div class="kpi-val">{{ referrals|length }}</div>
+        <div class="kpi-bar" style="background:var(--green)"></div>
     </div>
     <div class="kpi">
-        <div class="kpi-lbl">Total Earned</div>
-        <div class="kpi-val" style="color:var(--purple)">${{ "%.2f"|format(total_earned) }}</div>
-        <div class="kpi-bg-ico">📈</div>
+        <div class="kpi-top"><span class="kpi-lbl">Всего начислено</span>
+            <span class="kpi-ico" style="background:var(--purple-dim);color:var(--purple)"><svg class="ic"><use href="#i-coins"/></svg></span></div>
+        <div class="kpi-val">${{ "%.2f"|format(total_earned) }}</div>
+        <div class="kpi-bar" style="background:var(--purple)"></div>
     </div>
 </div>
 
 <!-- Actions -->
-<div class="card" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-    <div style="font-size:12px;font-weight:600;color:var(--text-2);margin-right:4px">Actions:</div>
+<div class="card">
+    <div class="row" style="gap:10px;flex-wrap:wrap;align-items:center">
+        <span class="card-ttl" style="margin-right:4px">Действия</span>
 
-    {% if user.is_banned %}
-    <form method="post" action="/users/{{ user.id }}/unban">
-        <button type="submit" class="btn btn-green">✅ Unban</button>
-    </form>
-    {% else %}
-    <form method="post" action="/users/{{ user.id }}/ban"
-          onsubmit="return confirm('Ban user @{{ user.username or user.id }}?')">
-        <button type="submit" class="btn btn-red">🚫 Ban</button>
-    </form>
-    {% endif %}
+        {% if user.is_banned %}
+        <form method="post" action="/users/{{ user.id }}/unban">
+            <button type="submit" class="btn btn-green btn-sm"><svg class="ic"><use href="#i-shield"/></svg> Разблокировать</button>
+        </form>
+        {% else %}
+        <form method="post" action="/users/{{ user.id }}/ban" onsubmit="return confirm('Заблокировать @{{ user.username or user.id }}?')">
+            <button type="submit" class="btn btn-red btn-sm"><svg class="ic"><use href="#i-ban"/></svg> Заблокировать</button>
+        </form>
+        {% endif %}
 
-    <form method="post" action="/users/{{ user.id }}/adjust"
-          style="display:flex;gap:6px;align-items:center">
-        <input type="number" name="amount" step="0.01" placeholder="±amount"
-               style="width:110px" required>
-        <button type="submit" class="btn btn-ghost">💰 Adjust Balance</button>
-    </form>
+        <form method="post" action="/users/{{ user.id }}/adjust" style="display:flex;gap:6px;align-items:center">
+            <input type="number" name="amount" step="0.01" placeholder="± сумма" style="width:120px" required>
+            <button type="submit" class="btn btn-ghost btn-sm"><svg class="ic"><use href="#i-coins"/></svg> Изменить баланс</button>
+        </form>
 
-    <form method="post" action="/users/{{ user.id }}/message"
-          style="display:flex;gap:6px;align-items:center">
-        <input type="text" name="text" placeholder="Message text…" style="width:220px" required>
-        <button type="submit" class="btn btn-primary">📨 Send</button>
-    </form>
+        <form method="post" action="/users/{{ user.id }}/message" style="display:flex;gap:6px;align-items:center;flex:1;min-width:220px">
+            <input type="text" name="text" placeholder="Текст сообщения…" style="flex:1" required>
+            <button type="submit" class="btn btn-primary btn-sm"><svg class="ic"><use href="#i-send"/></svg> Отправить</button>
+        </form>
+    </div>
 </div>
 
-<!-- Referrals -->
-<div class="card" style="padding:0;overflow:hidden;margin-bottom:16px">
-    <div style="padding:16px 20px;border-bottom:1px solid var(--border)">
-        <span class="card-ttl">Referrals ({{ referrals|length }})</span>
-    </div>
-    {% if referrals %}
-    <table>
-        <thead><tr>
-            <th>User</th><th>Date</th><th>Join</th><th>Reaction</th><th>30d</th>
-        </tr></thead>
-        <tbody>
-        {% for ref, referred_user in referrals %}
-        <tr>
-            <td>@{{ referred_user.username or referred_user.full_name or ref.referred_id }}</td>
-            <td style="color:var(--text-2);font-size:12px">{{ ref.created_at.strftime('%d.%m.%Y') }}</td>
-            <td>{% if ref.join_bonus_paid %}<span style="color:var(--green)">✓</span>{% else %}<span style="color:var(--text-3)">—</span>{% endif %}</td>
-            <td>{% if ref.reaction_bonus_paid %}<span style="color:var(--green)">✓</span>{% else %}<span style="color:var(--text-3)">—</span>{% endif %}</td>
-            <td>{% if ref.retention_bonus_paid %}<span style="color:var(--green)">✓</span>{% else %}<span style="color:var(--text-3)">—</span>{% endif %}</td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <div class="empty"><div class="empty-ico">👥</div><div class="empty-txt">No referrals</div></div>
-    {% endif %}
-</div>
+<div style="display:grid;grid-template-columns:1.5fr 1fr;gap:14px;align-items:start">
 
-<!-- Transactions -->
-<div class="card" style="padding:0;overflow:hidden;margin-bottom:16px">
-    <div style="padding:16px 20px;border-bottom:1px solid var(--border)">
-        <span class="card-ttl">Transactions (last 50)</span>
+    <!-- Transactions -->
+    <div class="card flush">
+        <div class="row" style="padding:18px 20px 12px;gap:9px">
+            <span class="ico t2" style="display:flex"><svg class="ic"><use href="#i-coins"/></svg></span>
+            <span class="card-ttl">История операций</span>
+            <span class="muted right" style="font-size:11px">последние 50</span>
+        </div>
+        {% if transactions %}
+        <table>
+            <tbody>
+            {% for tx in transactions %}
+            {% set c = txcolors.get(tx.type.value, 'gold') %}
+            <tr>
+                <td style="width:0">
+                    <span class="kpi-ico" style="width:30px;height:30px;background:var(--{{ c }}-dim);color:var(--{{ c }})"><svg class="ic" style="width:14px;height:14px"><use href="#{{ txicons.get(tx.type.value,'i-coins') }}"/></svg></span>
+                </td>
+                <td><span style="font-weight:500;font-size:13px">{{ txnames.get(tx.type.value, tx.type.value) }}</span></td>
+                <td class="muted" style="font-size:12px">{{ tx.created_at.strftime('%d.%m.%Y') }}</td>
+                <td style="text-align:right;font-weight:700;font-family:inherit;color:{% if tx.amount_usdt >= 0 %}var(--green){% else %}var(--red){% endif %}" class="tnum">
+                    {{ '+' if tx.amount_usdt >= 0 else '' }}${{ "%.2f"|format(tx.amount_usdt) }}
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty"><svg class="ic"><use href="#i-coins"/></svg><div class="empty-txt">Операций нет</div></div>
+        {% endif %}
     </div>
-    {% if transactions %}
-    <table>
-        <thead><tr><th>Date</th><th>Type</th><th>Amount</th></tr></thead>
-        <tbody>
-        {% for tx in transactions %}
-        <tr>
-            <td style="color:var(--text-2);font-size:12px">{{ tx.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
-            <td style="font-size:12px;color:var(--text-2)">{{ tx.type.value.replace('_', ' ') }}</td>
-            <td style="color:{% if tx.amount_usdt >= 0 %}var(--green){% else %}var(--red){% endif %};font-weight:600">
-                {{ '+' if tx.amount_usdt >= 0 else '' }}${{ "%.2f"|format(tx.amount_usdt) }}
-            </td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <div class="empty"><div class="empty-ico">📋</div><div class="empty-txt">No transactions</div></div>
-    {% endif %}
-</div>
 
-<!-- Withdrawals -->
-<div class="card" style="padding:0;overflow:hidden">
-    <div style="padding:16px 20px;border-bottom:1px solid var(--border)">
-        <span class="card-ttl">Withdrawals</span>
+    <!-- Referrals + Withdrawals -->
+    <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="card flush">
+            <div class="row" style="padding:18px 20px 12px;gap:9px">
+                <span class="ico t2" style="display:flex"><svg class="ic"><use href="#i-users"/></svg></span>
+                <span class="card-ttl">Рефералы ({{ referrals|length }})</span>
+            </div>
+            {% if referrals %}
+            <table>
+                <thead><tr><th>Пользователь</th><th style="text-align:center">Вст.</th><th style="text-align:center">Реакц.</th><th style="text-align:center">30д</th></tr></thead>
+                <tbody>
+                {% for ref, referred_user in referrals %}
+                <tr>
+                    <td style="font-size:12.5px">@{{ referred_user.username or referred_user.full_name or ref.referred_id }}</td>
+                    <td style="text-align:center">{% if ref.join_bonus_paid %}<span style="color:var(--green)">✓</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+                    <td style="text-align:center">{% if ref.reaction_bonus_paid %}<span style="color:var(--green)">✓</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+                    <td style="text-align:center">{% if ref.retention_bonus_paid %}<span style="color:var(--green)">✓</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty"><svg class="ic"><use href="#i-users"/></svg><div class="empty-txt">Нет рефералов</div></div>
+            {% endif %}
+        </div>
+
+        <div class="card flush">
+            <div class="row" style="padding:18px 20px 12px;gap:9px">
+                <span class="ico t2" style="display:flex"><svg class="ic"><use href="#i-withdrawals"/></svg></span>
+                <span class="card-ttl">Выводы</span>
+            </div>
+            {% if withdrawals %}
+            <table>
+                <thead><tr><th>Дата</th><th>Сумма</th><th>Статус</th></tr></thead>
+                <tbody>
+                {% for w in withdrawals %}
+                <tr>
+                    <td class="muted" style="font-size:12px">{{ w.created_at.strftime('%d.%m.%Y') }}</td>
+                    <td class="amt">${{ "%.2f"|format(w.amount_usdt) }}</td>
+                    <td><span class="badge badge-{{ w.status.value }}"><span class="dot"></span>{% if w.status.value == 'pending' %}Ожидает{% elif w.status.value == 'approved' %}Выплачено{% else %}Отклонено{% endif %}</span></td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty"><svg class="ic"><use href="#i-withdrawals"/></svg><div class="empty-txt">Выводов нет</div></div>
+            {% endif %}
+        </div>
     </div>
-    {% if withdrawals %}
-    <table>
-        <thead><tr><th>Date</th><th>Amount</th><th>Wallet</th><th>Status</th></tr></thead>
-        <tbody>
-        {% for w in withdrawals %}
-        <tr>
-            <td style="color:var(--text-2);font-size:12px">{{ w.created_at.strftime('%d.%m.%Y') }}</td>
-            <td style="color:var(--gold);font-weight:600">${{ "%.2f"|format(w.amount_usdt) }}</td>
-            <td style="font-size:11px;color:var(--text-2)">{{ w.wallet_address|truncate(22, true) }}</td>
-            <td>
-                <span class="badge badge-{{ w.status.value }}">{{ w.status.value }}</span>
-            </td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <div class="empty"><div class="empty-ico">📤</div><div class="empty-txt">No withdrawals</div></div>
-    {% endif %}
+
 </div>
 
 {% endblock %}

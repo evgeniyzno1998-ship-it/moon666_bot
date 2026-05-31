@@ -1,62 +1,55 @@
 {% extends "base.html" %}
 {% block content %}
 
+{% set applynames = {'join':'Вступление','reaction':'Реакция','all':'Всё'} %}
+
 <div class="pg-head">
-    <div class="pg-ico">🎯</div>
-    <div class="pg-title">Кампании</div>
-    <a href="/campaigns/new" class="btn btn-primary" style="margin-left:auto;text-decoration:none">
-        + Новая кампания
-    </a>
+    <div class="pg-ico"><svg class="ic"><use href="#i-campaigns"/></svg></div>
+    <div>
+        <div class="pg-title">Кампании</div>
+        <div class="pg-sub">Бонусные множители на период</div>
+    </div>
+    <a href="/campaigns/new" class="btn btn-primary right"><svg class="ic"><use href="#i-plus"/></svg> Новая кампания</a>
 </div>
 
-<div class="card" style="padding:0;overflow:hidden">
-    {% if campaigns %}
-    <table>
-        <thead>
-            <tr>
-                <th>Название</th>
-                <th>Множитель</th>
-                <th>Применяется к</th>
-                <th>Старт</th>
-                <th>Конец</th>
-                <th>Статус</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for c in campaigns %}
-        <tr>
-            <td style="font-weight:600">{{ c.name }}</td>
-            <td style="color:var(--gold);font-weight:700">×{{ c.bonus_multiplier }}</td>
-            <td style="color:var(--text-2);font-size:12px">{{ c.applies_to.value }}</td>
-            <td style="color:var(--text-2);font-size:12px">{{ c.starts_at.strftime('%d.%m.%Y %H:%M') }}</td>
-            <td style="color:var(--text-2);font-size:12px">{{ c.ends_at.strftime('%d.%m.%Y %H:%M') }}</td>
-            <td>
-                {% if now >= c.starts_at and now <= c.ends_at %}
-                <span class="badge badge-approved">● Active</span>
-                {% elif now < c.starts_at %}
-                <span class="badge badge-pending">⏳ Upcoming</span>
-                {% else %}
-                <span class="badge" style="background:rgba(255,255,255,.03);color:var(--text-3)">Expired</span>
-                {% endif %}
-            </td>
-            <td style="text-align:right">
-                <a href="/campaigns/{{ c.id }}/edit" class="btn btn-ghost" style="text-decoration:none;font-size:11px">Edit</a>
-                <form method="post" action="/campaigns/{{ c.id }}/delete" style="display:inline"
-                      onsubmit="return confirm('Delete campaign {{ c.name }}?')">
-                    <button type="submit" class="btn btn-red" style="font-size:11px">Delete</button>
+{% if campaigns %}
+<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px">
+    {% for c in campaigns %}
+    {% set is_active = now >= c.starts_at and now <= c.ends_at %}
+    {% set is_upcoming = now < c.starts_at %}
+    <div class="card" style="margin-bottom:0;{% if is_active %}border-color:rgba(240,185,11,.35){% endif %}">
+        <div class="row" style="gap:12px;margin-bottom:14px">
+            <span class="kpi-ico" style="width:42px;height:42px;border-radius:11px;background:var(--gold-dim);color:var(--gold);font-weight:800;font-size:15px">×{{ c.bonus_multiplier }}</span>
+            <div style="min-width:0">
+                <div style="font-weight:700;font-size:15px">{{ c.name }}</div>
+                <div class="muted" style="font-size:12px">Применяется к: {{ applynames.get(c.applies_to.value, c.applies_to.value) }}</div>
+            </div>
+            <span class="right">
+                {% if is_active %}<span class="badge badge-approved"><span class="dot"></span>Активна</span>
+                {% elif is_upcoming %}<span class="badge badge-blue"><span class="dot"></span>Запланирована</span>
+                {% else %}<span class="badge badge-muted">Завершена</span>{% endif %}
+            </span>
+        </div>
+        <div class="row" style="gap:8px;padding:11px 13px;background:var(--bg-inset);border-radius:var(--r-sm)">
+            <svg class="ic" style="width:14px;height:14px;color:var(--text-3)"><use href="#i-calendar"/></svg>
+            <span class="t2" style="font-size:12.5px">{{ c.starts_at.strftime('%d.%m.%Y') }} → {{ c.ends_at.strftime('%d.%m.%Y') }}</span>
+            <span class="right row" style="gap:6px">
+                <a href="/campaigns/{{ c.id }}/edit" class="btn btn-ghost btn-sm"><svg class="ic"><use href="#i-edit"/></svg> Изменить</a>
+                <form method="post" action="/campaigns/{{ c.id }}/delete" onsubmit="return confirm('Удалить кампанию «{{ c.name }}»?')">
+                    <button type="submit" class="btn btn-red btn-sm"><svg class="ic"><use href="#i-trash"/></svg></button>
                 </form>
-            </td>
-        </tr>
-        {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <div class="empty" style="padding:64px 24px">
-        <div class="empty-ico">🎯</div>
-        <div class="empty-txt">Нет кампаний. Создайте первую!</div>
+            </span>
+        </div>
     </div>
-    {% endif %}
+    {% endfor %}
 </div>
+{% else %}
+<div class="card flush">
+    <div class="empty" style="padding:64px 24px">
+        <svg class="ic"><use href="#i-campaigns"/></svg>
+        <div class="empty-txt">Кампаний пока нет. Создайте первую!</div>
+    </div>
+</div>
+{% endif %}
 
 {% endblock %}
